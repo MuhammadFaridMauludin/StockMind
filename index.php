@@ -1,26 +1,22 @@
 <?php
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 require "config.php";
 require "function.php";
 
 $update = json_decode(file_get_contents("php://input"), true);
 
-if (!$update) {
-    exit("No data from Telegram");
-}
+if (!$update) exit("No data");
 
 $chat_id = $update["message"]["chat"]["id"] ?? null;
-kirimPesan($chat_id, "");
+$text = strtoupper(trim($update["message"]["text"] ?? ""));
 
-$text = strtoupper($update["message"]["text"] ?? "");
+file_put_contents("log2.txt", "TEXT: $text" . PHP_EOL, FILE_APPEND);
 
-if (strpos($text, "ANALISIS") !== false) {
-    $kode = trim(str_replace("ANALISIS", "", $text));
+if (strpos($text, "ANALISIS SAHAM") !== false) {
+    // Hapus "ANALISIS SAHAM" sekaligus, bukan cuma "ANALISIS"
+    $kode = trim(str_replace("ANALISIS SAHAM", "", $text));
+
+    file_put_contents("log2.txt", "KODE: $kode" . PHP_EOL, FILE_APPEND);
 
     $hasil = analisisSaham($kode);
-
     kirimPesan($chat_id, $hasil);
 }
