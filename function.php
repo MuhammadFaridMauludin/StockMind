@@ -29,7 +29,9 @@ require "api.php";
 
 function analisisSaham($kode) {
     $data = getDataSaham($kode);
+    $eps = $data["eps"] ?? 0;
 
+    $harga = $data["price"] ?? "Tidak tersedia";
     // =====================
     // TEKNIKAL
     // =====================
@@ -53,12 +55,15 @@ function analisisSaham($kode) {
     $per = ($data["per"] < 10) ? "Murah ✅" : "Mahal ❌";
     $pbv = ($data["pbv"] < 1.5) ? "Wajar ✅" : "Tinggi ❌";
     $roe = ($data["roe"] > 15) ? "Bagus ✅" : "Kurang ❌";
-
+    
     // =====================
     // NILAI WAJAR
     // =====================
-    $hargawajar = $data["eps"] * 8; // asumsi PER industri = 8
-
+    if ($eps > 0) {
+    $hargawajar = $eps * 8;
+    } else {
+    $hargawajar = "Tidak tersedia";
+    }
     // =====================
     // KESIMPULAN
     // =====================
@@ -76,7 +81,7 @@ function analisisSaham($kode) {
     
 📊 ANALISIS SAHAM: $kode
 
-💰 Harga: {$data["harga"]}
+💰 Harga: $harga
 
 📉 TEKNIKAL
 RSI: $rsi
@@ -86,6 +91,7 @@ Trend: $trend
 PER: $per
 PBV: $pbv
 ROE: $roe
+EPS: $eps
 
 💰 NILAI WAJAR
 Rp $hargawajar
