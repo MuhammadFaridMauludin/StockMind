@@ -1,18 +1,58 @@
 <?php
 require_once __DIR__ . "/../services/StockService.php";
 
-function analisisTeknikal($harga, $rsi, $ma50) {
+function analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $volume_signal) {
     $trend = ($harga > $ma50) ? "Uptrend ✅" : "Downtrend ❌";
 
-    if ($rsi < 30 && $harga > $ma50) {
-        $summary = "Momentum naik mulai terbentuk (potensi reversal)";
-    } elseif ($rsi > 70) {
-        $summary = "Harga jenuh beli, rawan koreksi";
+    // TREND
+    if ($harga > $ma20 && $ma20 > $ma50) {
+        $trend = "Uptrend kuat ✅";
+    } elseif ($harga < $ma20 && $ma20 < $ma50) {
+        $trend = "Downtrend ❌";
+    } else {
+        $trend = "Sideways ⚖️";
+    }
+        // RSI INTERPRETASI
+    if ($rsi < 30) {
+        $rsi_text = "Oversold → potensi rebound";
+    } elseif ($rsi < 50) {
+        $rsi_text = "Momentum lemah";
+    } elseif ($rsi < 70) {
+        $rsi_text = "Momentum cukup kuat";
+    } else {
+        $rsi_text = "Overbought → rawan koreksi";
+    }
+    // SUPPORT RESISTANCE
+    if ($harga <= $support * 1.02) {
+        $sr_text = "Dekat support → potensi pantulan";
+    } elseif ($harga >= $resistance * 0.98) {
+        $sr_text = "Dekat resistance → rawan turun";
+    } else {
+        $sr_text = "Area netral";
+    }
+    if ($volume_signal == "high") {
+        $vol_text = "Didukung volume besar (valid)";
+    } else {
+        $vol_text = "Volume lemah (belum ada konfirmasi)";
+    }
+        // SUMMARY LOGIC
+    if ($trend == "Downtrend ❌" && $rsi < 30) {
+        $summary = "Harga oversold dalam downtrend → potensi rebound tapi berisiko";
+    } elseif ($trend == "Uptrend kuat ✅" && $volume_signal == "high") {
+        $summary = "Trend naik kuat didukung volume → sinyal bullish";
+    } elseif ($harga <= $support * 1.02) {
+        $summary = "Harga dekat support → area menarik untuk akumulasi";
     } else {
         $summary = "Pergerakan masih normal";
     }
 
-    return ["trend" => $trend, "summary" => $summary];
+    return [
+        "trend" => $trend,
+        "rsi_text" => $rsi_text,
+        "sr_text" => $sr_text,
+        "volume_text" => $vol_text,
+        "summary" => $summary
+    ];
 }
 
 function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
@@ -113,139 +153,201 @@ function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
     );
 }
 
-function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma50) {
+function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal) {
 
-    $hargawajar = ($eps > 0) ? $eps * 8 : 0;
+    $score = 50; // base netral
+    $notes = [];
 
-    $valuasi = ($harga > 0 && $eps > 0)
-        ? ($harga < $hargawajar ? "Undervalued ✅" : "Overvalued ❌")
-        : "Tidak diketahui";
+    // ======================
+    // FUNDAMENTAL (max +30)
+    // ======================
 
-    $score = 0;
-    $turnaround_note = "";
-
-    // FUNDAMENTAL
-    if ($per < 10) {
-        $score += 35;
+    // PER
+    if ($per > 0 && $per < 10) {
+        $score += 10;
     } elseif ($per < 20) {
-        $score += 25;
-    } elseif ($per < 50) {
-        $score += 15;
+        $score += 6;
+    } elseif ($per > 40) {
+        $score -= 8;
+        $notes[] = "Valuasi mahal";
     }
 
+    // ROE
     if ($roe > 0.18) {
-        $score += 45;
-    } elseif ($roe > 0.15) {
-        $score += 35;
-    } elseif ($roe > 0.08) {
-        $score += 20;
-    } elseif ($roe > 0) {
-        $score += 10;
+        $score += 12;
+    } elseif ($roe > 0.12) {
+        $score += 8;
+    } elseif ($roe < 0.08) {
+        $score -= 8;
+        $notes[] = "Profitabilitas rendah";
     }
 
     // DER
-    if ($der != 0 && $der > 0) {
-    if ($der < 1) {
-        $score += 15;
-    } elseif ($der < 2) {
-        $score += 5;
-    } else {
+    if ($der > 0) {
+        if ($der < 1) {
+            $score += 5;
+        } elseif ($der > 2) {
+            $score -= 6;
+            $notes[] = "Utang tinggi";
+        }
+    }
+
+    // DIVIDEN
+    if ($div_yield >= 0.02 && $div_yield <= 0.06) {
+        $score += 4;
+    }
+
+    // ======================
+    // TEKNIKAL (max +30)
+    // ======================
+
+    // Trend
+    if ($harga > $ma20 && $ma20 > $ma50) {
+        $score += 12;
+    } elseif ($harga < $ma20 && $ma20 < $ma50) {
         $score -= 10;
-    }
-    }
-    if ($div_yield >= 0.02 && $div_yield <= 0.05) {
-    $score += 10; 
-    } elseif ($div_yield > 0.05) {
-        $score += 3;
-    } elseif ($div_yield > 0) {
-        $score += 5; 
+        $notes[] = "Masih downtrend";
     }
 
-    // TEKNIKAL
+    // RSI
     if ($rsi < 30) {
-        $score += 10;
-    } elseif ($rsi < 50) {
-        $score += 5;
+        $score += 8;
+    } elseif ($rsi > 70) {
+        $score -= 6;
+        $notes[] = "Jenuh beli";
     }
 
-    if ($harga > $ma50) {
-        $score += 15;
-    } else {
-        $score -= 5;
+    // Support proximity
+    if ($harga <= $support * 1.02) {
+        $score += 6;
     }
 
-    // TURNAROUND
-    if ($eps > 0 && $roe < 0.08) {
-        $turnaround_note = "Perusahaan dalam fase pemulihan (turnaround)";
-        $score += 10;
+    // Volume
+    if ($volume_signal == "high") {
+        $score += 4;
     }
 
+    // ======================
+    // NORMALISASI
+    // ======================
     if ($score > 100) $score = 100;
     if ($score < 0)   $score = 0;
 
-    if ($score >= 80) {
+    // ======================
+    // REKOMENDASI
+    // ======================
+    if ($score >= 85) {
         $rekom = "Strong Buy 🚀";
-    } elseif ($score >= 60) {
+    } elseif ($score >= 70) {
         $rekom = "Buy 👍";
+    } elseif ($score >= 55) {
+        $rekom = "Buy on Weakness";
     } elseif ($score >= 40) {
-        $rekom = "Hold 🤝";
-    } elseif ($score >= 20) {
-        $rekom = "Speculative ⚠️";
+        $rekom = "Wait & See";
     } else {
-        $rekom = "High Risk ⚠️";
+        $rekom = "Avoid ⚠️";
+    }
+    $hargawajar = ($eps > 0) ? $eps * 8 : 0;
+
+    if ($harga > 0 && $eps > 0) {
+        $valuasi = ($harga < $hargawajar)
+            ? "Undervalued ✅"
+            : "Overvalued ❌";
+    } else {
+        $valuasi = "Tidak diketahui";
     }
 
-    return compact("hargawajar", "valuasi", "score", "rekom", "turnaround_note");
+    return [
+        "score" => $score,
+        "rekom" => $rekom,
+        "notes" => $notes,
+        "hargawajar"=>$hargawajar,
+        "valuasi"=>$valuasi
+    ];
 }
 
-function generateInsight($per, $roe, $rsi, $harga, $ma50) {
+function generateInsight($per, $roe, $rsi, $trend) {
+
     if ($per < 10 && $roe > 0.15) {
-        return "Valuasi rendah dengan profitabilitas tinggi → kombinasi sangat menarik";
+        return "Valuasi murah + profitabilitas tinggi → menarik";
     }
-    if ($per < 10 && $roe >= 0.08) {
-        return "Valuasi murah dengan profitabilitas cukup → saham menarik untuk dipertimbangkan";  // ← tambahkan
+
+    if ($trend == "Downtrend ❌" && $rsi < 30) {
+        return "Oversold di downtrend → potensi rebound";
     }
-    if ($per < 10 && $roe < 0.08) {
-        return "Valuasi murah namun kualitas laba rendah → berpotensi value trap";
+
+    if ($trend == "Uptrend kuat ✅" && $rsi > 60) {
+        return "Trend naik kuat → momentum bullish";
     }
-    if ($roe > 0.15 && $harga > $ma50) {
-        return "Fundamental kuat didukung tren naik → sinyal bullish kuat";
-    }
-    if ($rsi > 70 && $harga > $ma50) {
-        return "Harga jenuh beli dalam tren naik → pertimbangkan tunggu koreksi";  // ← tambahkan untuk kasus INDF
-    }
-    if ($rsi < 30 && $harga < $ma50) {
-        return "Harga sedang oversold dalam tren turun → potensi rebound namun berisiko";
-    }
-    if ($rsi < 30 && $harga > $ma50) {
-        return "Oversold dalam tren naik → peluang entry menarik";
-    }
-    return "Kondisi saham relatif netral";
+
+    return "Kondisi relatif netral";
 }
 
-function generateNarasi($kode, $valuasi, $roe, $score) {
+function generateNarasiAI($kode, $data) {
+
+    $trend = $data['trend'];
+    $rsi   = $data['rsi'];
+    $score = $data['score'];
+    $valuasi = $data['valuasi'];
+    $roe = $data['roe'];
+    $support = $data['support'];
+    $harga = $data['harga'];
+
     $narasi = "Saham $kode saat ini ";
 
-    if ($valuasi == "Undervalued ✅") {
-        $narasi .= "memiliki valuasi yang menarik";
+    // ======================
+    // 1. KONDISI TEKNIKAL
+    // ======================
+    if ($trend == "Downtrend ❌") {
+        $narasi .= "masih berada dalam tren turun sehingga tekanan jual masih cukup dominan. ";
+    } elseif ($trend == "Uptrend kuat ✅") {
+        $narasi .= "sedang bergerak dalam tren naik yang cukup solid. ";
     } else {
-        $narasi .= "cenderung berada pada valuasi tinggi";
+        $narasi .= "sedang berada dalam fase konsolidasi. ";
     }
 
+    // ======================
+    // 2. FUNDAMENTAL
+    // ======================
     if ($roe > 0.15) {
-        $narasi .= " dengan kinerja profitabilitas yang kuat";
-    } elseif ($roe > 0.08) {
-        $narasi .= " dengan profitabilitas yang cukup stabil";
+        $narasi .= "Dari sisi fundamental, perusahaan memiliki profitabilitas yang kuat. ";
+    } elseif ($roe < 0.08) {
+        $narasi .= "Namun dari sisi fundamental, profitabilitas masih tergolong rendah. ";
     } else {
-        $narasi .= " namun profitabilitas masih rendah";
+        $narasi .= "Fundamental perusahaan tergolong cukup stabil. ";
     }
 
-    if ($score >= 80) {
-        $narasi .= ". Secara keseluruhan saham ini menarik untuk dipertimbangkan.";
-    } elseif ($score >= 60) {
-        $narasi .= ". Saham ini cukup menarik namun perlu memperhatikan timing.";
+    // ======================
+    // 3. VALUASI
+    // ======================
+    if ($data['per'] > 0 && $data['per'] < 10)  {
+        $narasi .= "Valuasi saat ini tergolong menarik dibanding kinerjanya. ";
     } else {
-        $narasi .= ". Saham ini masih berisiko dan perlu kehati-hatian.";
+        $narasi .= "Valuasi saham saat ini cenderung tidak murah. ";
+    }
+
+    // ======================
+    // 4. TIMING (RSI + SUPPORT)
+    // ======================
+    if ($rsi < 30) {
+        $narasi .= "Secara teknikal, harga sudah berada di area jenuh jual sehingga berpotensi terjadi rebound. ";
+    } elseif ($rsi > 70) {
+        $narasi .= "Saat ini harga sudah cukup tinggi dan rawan mengalami koreksi. ";
+    }
+
+    if ($harga <= $support * 1.02) {
+        $narasi .= "Posisi harga yang dekat dengan area support juga membuka peluang entry yang lebih aman. ";
+    }
+
+    // ======================
+    // 5. PENUTUP (AKSI)
+    // ======================
+    if ($score >= 75) {
+        $narasi .= "Secara keseluruhan, saham ini menarik untuk mulai diakumulasi secara bertahap.";
+    } elseif ($score >= 60) {
+        $narasi .= "Saham ini cukup menarik, namun sebaiknya menunggu konfirmasi tambahan sebelum masuk lebih besar.";
+    } else {
+        $narasi .= "Untuk saat ini, sebaiknya menunggu hingga kondisi menjadi lebih jelas.";
     }
 
     return $narasi;
@@ -267,26 +369,39 @@ function analisisSaham($kode) {
     $div_yield = $data["div_yield"] ?? 0;
     $rsi   = $data["rsi"]   ?? 0;
     $ma50  = $data["ma50"]  ?? 0;
+    $ma20 = $data["ma20"] ?? 0;
+    $ma50 = $data["ma50"] ?? 0;
+    $support = $data["support"] ?? 0;
+    $volume_signal = $data["volume_signal"] ?? "low";
 
-    $tek    = analisisTeknikal($harga, $rsi, $ma50);
+    $tek    = analisisTeknikal($harga, $rsi, $data["ma20"] ?? 0, $data["ma50"] ?? 0, $data["support"] ?? 0, $data["resistance"] ?? 0, $data["volume_signal"] ?? "low");
     $fund   = analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield);
-    $dec    = analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma50);
+    $dec    = analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal);
     $insight = generateInsight($per, $roe, $rsi, $harga, $ma50);
-    $narasi  = generateNarasi($kode, $dec['valuasi'], $roe, $dec['score']);
+    $narasi = generateNarasiAI($kode, [
+    "trend" => $tek['trend'],
+    "rsi" => $rsi,
+    "score" => $dec['score'],
+    "valuasi" => $dec['valuasi'],
+    "roe" => $roe,
+    "harga" => $harga,
+    "support" => $data['support'],
+    "per" => $per,
+    "notes" => $dec['notes'] ?? []
+]);
 
     $der_tampil = is_numeric($fund['der_display'])
         ? round($fund['der_display'], 2)
         : $fund['der_display'];
 
+    $risk_note = !empty($dec['notes'])
+    ? "⚠️ Risiko: " . implode(", ", $dec['notes'])
+    : "";
+
     return "
 📊 ANALISIS SAHAM: $kode
 
-💰 Harga: Rp $harga
-
-📉 TEKNIKAL
-RSI: " . round($rsi, 2) . "
-Trend: {$tek['trend']}
-→ {$tek['summary']}
+💰 Harga Sekarang: Rp $harga
 
 📊 FUNDAMENTAL
 EPS: " . round($eps, 2) . "
@@ -307,16 +422,34 @@ DER: $der_tampil ({$fund['der_status']})
 DIV YIELD: " . round($fund['div_pct'], 2) . "% ({$fund['div_status']})
 → {$fund['div_ket']}
 
-💰 NILAI WAJAR
+💰 Harga Wajar
 Rp {$dec['hargawajar']} ({$dec['valuasi']})
+
+📉 TEKNIKAL
+RSI: " . round($rsi, 2) . "
+→ {$tek['rsi_text']}
+
+Trend: {$tek['trend']}
+
+Support: {$data['support']} | Resistance: {$data['resistance']}
+→ {$tek['sr_text']}
+
+Volume: {$data['volume_signal']}
+→ {$tek['volume_text']}
+
+📌 Kesimpulan Teknikal
+→ {$tek['summary']}
 
 🎯 SCORE: {$dec['score']}/100
 📌 REKOMENDASI: {$dec['rekom']}
+$risk_note
 
 🧠 INSIGHT
 $insight
 
 🗣️ NARASI
 $narasi
+
+
 ";
 }

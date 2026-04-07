@@ -1,0 +1,21 @@
+[07-Apr-2026 19:54:43 UTC] PHP Fatal error:  Uncaught ArgumentCountError: Too few arguments to function analisisKeputusan(), 8 passed in C:\laragon\www\bot\services\AnalysisService.php on line 330 and exactly 11 expected in C:\laragon\www\bot\services\AnalysisService.php:156
+Stack trace:
+#0 C:\laragon\www\bot\services\AnalysisService.php(330): analisisKeputusan(4510.0, 603.45, 7.47, 0.1914, 0, 0.0217, 32.46, 4944.5)
+#1 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BMRI')
+#2 {main}
+  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 156
+[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 386
+[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 436
+[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 436
+[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 397
+[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 447
+[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 447
+[07-Apr-2026 20:08:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function generateNarasi() in C:\laragon\www\bot\services\AnalysisService.php:370
+Stack trace:
+#0 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BMRI')
+#1 {main}
+  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 370
+[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 374
+[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 429
+[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 429
+[07-Apr-2026 20:17:36 UTC] PHP Warning:  Undefined array key "per" in C:\laragon\www\bot\services\AnalysisService.php on line 323

@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . "/../config/config.php";
+require_once "C:/laragon/www/bot/config/config.php";
 
 function kirimPesan($chat_id, $text) {
     global $BOT_TOKEN;
@@ -23,5 +23,5 @@ function kirimPesan($chat_id, $text) {
     if ($result === false) {
         error_log("Gagal mengirim pesan ke Telegram: chat_id $chat_id");
     }
-    file_put_contents("../storage/response.txt", $result);
+    file_put_contents("C:/laragon/www/bot/storage/response.txt", $result);
 }
