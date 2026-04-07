@@ -54,3 +54,9 @@
 
 {"symbol": "BUMI.JK", "price": 238.0, "eps": 3.74, "per": 63.64, "pbv": 59500.0, "roe": 0.0425, "der": 0.15, "div_yield": 0.0, "rsi": 49.3, "ma50": 266.6}
 
+{"symbol": "INDF.JK", "price": 6550.0, "eps": 1217.01, "per": 5.38, "pbv": 0.79, "roe": 0.1357, "der": 0.62, "div_yield": 0.0423, "rsi": 72.0, "ma50": 6534.0}
+
+{"symbol": "INDF.JK", "price": 6550.0, "eps": 1217.01, "per": 5.38, "pbv": 0.79, "roe": 0.1357, "der": 0.62, "div_yield": 0.0423, "rsi": 72.0, "ma50": 6534.0}
+
+{"symbol": "INDF.JK", "price": 6550.0, "eps": 1217.01, "per": 5.38, "pbv": 0.79, "roe": 0.1357, "der": 0.62, "div_yield": 0.0423, "rsi": 72.0, "ma50": 6534.0}
+

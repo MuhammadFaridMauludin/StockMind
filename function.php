@@ -89,7 +89,7 @@ function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
     }
 
     // DER
-    if ($der === null || $der === "" || $der === 0) {
+    if ($der === null || $der === 0) {
         $der_status = "Tidak tersedia";
         $der_ket = "Data DER tidak tersedia";
         $der_display = "-";
@@ -170,7 +170,7 @@ function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma
     }
 
     // DER
-    if ($der !== null && $der !== "" && $der !== 0) {
+    if ($der !== null && $der > 0) {
         if ($der < 1) {
             $score += 15;
         } elseif ($der < 2) {
@@ -228,11 +228,17 @@ function generateInsight($per, $roe, $rsi, $harga, $ma50) {
     if ($per < 10 && $roe > 0.15) {
         return "Valuasi rendah dengan profitabilitas tinggi → kombinasi sangat menarik";
     }
-    if ($per < 10 && $roe < 0.1) {
+    if ($per < 10 && $roe >= 0.08) {
+        return "Valuasi murah dengan profitabilitas cukup → saham menarik untuk dipertimbangkan";  // ← tambahkan
+    }
+    if ($per < 10 && $roe < 0.08) {
         return "Valuasi murah namun kualitas laba rendah → berpotensi value trap";
     }
     if ($roe > 0.15 && $harga > $ma50) {
         return "Fundamental kuat didukung tren naik → sinyal bullish kuat";
+    }
+    if ($rsi > 70 && $harga > $ma50) {
+        return "Harga jenuh beli dalam tren naik → pertimbangkan tunggu koreksi";  // ← tambahkan untuk kasus INDF
     }
     if ($rsi < 30 && $harga < $ma50) {
         return "Harga sedang oversold dalam tren turun → potensi rebound namun berisiko";
