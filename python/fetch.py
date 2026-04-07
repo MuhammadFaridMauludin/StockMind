@@ -39,7 +39,6 @@ ma50 = float(ma50_last) if not math.isnan(ma50_last) else float(hist['Close'].me
 # ======================
 data = stock.info
 
-# Ambil harga dengan fallback
 price = (
     data.get("regularMarketPrice") or
     data.get("currentPrice") or
@@ -47,11 +46,9 @@ price = (
     float(hist['Close'].iloc[-1])
 )
 
-# DER — normalisasi (Yahoo return dalam persen, misal 523.5 = 5.235x)
 der_raw = float(data.get("debtToEquity") or 0)
 der = der_raw / 100 if der_raw > 10 else der_raw
 
-# DIV YIELD — normalisasi (Yahoo return 2.15, harusnya 0.0215)
 div_raw = float(data.get("dividendYield") or 0)
 div_yield = div_raw / 100 if div_raw > 1 else div_raw
 
