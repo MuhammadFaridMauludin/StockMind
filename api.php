@@ -2,7 +2,6 @@
 function getDataSaham($kode) {
     $kode = escapeshellarg($kode);
     
-    // Pakai path absolut
     $dir = __DIR__;
     $output = shell_exec("cd $dir && py get_stock.py $kode 2>&1");
     

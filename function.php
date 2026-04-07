@@ -89,7 +89,7 @@ function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
     }
 
     // DER
-    if ($der === null || $der === 0) {
+    if (empty($der) || $der == 0) {
         $der_status = "Tidak tersedia";
         $der_ket = "Data DER tidak tersedia";
         $der_display = "-";
@@ -170,21 +170,21 @@ function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma
     }
 
     // DER
-    if ($der !== null && $der > 0) {
-        if ($der < 1) {
-            $score += 15;
-        } elseif ($der < 2) {
-            $score += 5;
-        } else {
-            $score -= 10;
-        }
+    if ($der != 0 && $der > 0) {
+    if ($der < 1) {
+        $score += 15;
+    } elseif ($der < 2) {
+        $score += 5;
+    } else {
+        $score -= 10;
+    }
     }
     if ($div_yield >= 0.02 && $div_yield <= 0.05) {
-    $score += 10; // zona ideal
+    $score += 10; 
     } elseif ($div_yield > 0.05) {
-        $score += 3;  // tinggi tapi rawan
+        $score += 3;
     } elseif ($div_yield > 0) {
-        $score += 5;  // ada dividen tapi kecil
+        $score += 5; 
     }
 
     // TEKNIKAL
@@ -300,7 +300,6 @@ function analisisSaham($kode) {
     $insight = generateInsight($per, $roe, $rsi, $harga, $ma50);
     $narasi  = generateNarasi($kode, $dec['valuasi'], $roe, $dec['score']);
 
-    // fix: der_display bisa "-" jadi tidak pakai round()
     $der_tampil = is_numeric($fund['der_display'])
         ? round($fund['der_display'], 2)
         : $fund['der_display'];
