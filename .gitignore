@@ -1,2 +1,5 @@
 config.php
 .env
+log_python.txt
+log2.txt
+response.txt

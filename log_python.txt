@@ -1,0 +1,56 @@
+{"symbol": "BBRI.JK", "price": 3300.0, "eps": 376.16, "per": 8.77, "pbv": 1.53, "roe": 0.1746, "der": null, "rsi": 21.74, "ma50": 3696.0}
+
+{"symbol": "BBRI.JK", "price": 3300.0, "eps": 376.16, "per": 8.77, "pbv": 1.53, "roe": 0.1746, "der": null, "rsi": 21.74, "ma50": 3696.0}
+
+{"symbol": "BBRI.JK", "price": 3300.0, "eps": 376.16, "per": 8.77, "pbv": 1.53, "roe": 0.1746, "der": 0.0, "rsi": 21.74, "ma50": 3696.0}
+
+{"symbol": "BBRI.JK", "price": 3290.0, "eps": 376.16, "per": 8.75, "pbv": 1.53, "roe": 0.1746, "der": 0.0, "rsi": 21.28, "ma50": 3695.8}
+
+{"symbol": "BBRI.JK", "price": 3280.0, "eps": 376.16, "per": 8.72, "pbv": 1.52, "roe": 0.1746, "der": 0.0, "rsi": 20.83, "ma50": 3695.6}
+
+{"symbol": "BMRI.JK", "price": 4540.0, "eps": 603.11, "per": 7.53, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "rsi": 33.33, "ma50": 4945.1}
+
+{"symbol": "BBRI.JK", "price": 3290.0, "eps": 376.16, "per": 8.75, "pbv": 1.53, "roe": 0.1746, "der": 0.0, "rsi": 21.28, "ma50": 3695.8}
+
+{"symbol": "BBRI.JK", "price": 3290.0, "eps": 376.16, "per": 8.75, "pbv": 1.53, "roe": 0.1746, "der": 0.0, "rsi": 21.28, "ma50": 3695.8}
+
+{"symbol": "BBRI.JK", "price": 3270.0, "eps": 376.16, "per": 8.69, "pbv": 1.52, "roe": 0.1746, "der": 0.0, "rsi": 20.83, "ma50": 3695.6}
+
+{"symbol": "BBRI.JK", "price": 3280.0, "eps": 376.16, "per": 8.72, "pbv": 1.52, "roe": 0.1746, "der": 0.0, "rsi": 20.83, "ma50": 3695.6}
+
+{"symbol": "BBRI.JK", "price": 3260.0, "eps": 376.16, "per": 8.67, "pbv": 1.52, "roe": 0.1746, "der": 0.0, "rsi": 20.0, "ma50": 3695.2}
+
+{"symbol": "BBRI.JK", "price": 3270.0, "eps": 376.16, "per": 8.69, "pbv": 1.52, "roe": 0.1746, "der": 0.0, "rsi": 20.41, "ma50": 3695.4}
+
+{"symbol": "BUMI.JK", "price": 238.0, "eps": 3.74, "per": 63.64, "pbv": 59500.0, "roe": 0.0425, "der": 15.06, "rsi": 49.3, "ma50": 266.6}
+
+{"symbol": "INDF.JK", "price": 6575.0, "eps": 1217.01, "per": 5.4, "pbv": 0.79, "roe": 0.1357, "der": 62.46, "rsi": 73.47, "ma50": 6534.5}
+
+{"symbol": "INDF.JK", "price": 6550.0, "eps": 1217.01, "per": 5.38, "pbv": 0.79, "roe": 0.1357, "der": 62.46, "div_yield": 4.23, "rsi": 72.0, "ma50": 6534.0}
+
+{"symbol": "BBRI.JK", "price": 3250.0, "eps": 376.16, "per": 8.64, "pbv": 1.51, "roe": 0.1746, "der": 0.0, "div_yield": 10.4, "rsi": 19.61, "ma50": 3695.0}
+
+{"symbol": "BBRI.JK", "price": 3250.0, "eps": 376.16, "per": 8.64, "pbv": 1.51, "roe": 0.1746, "der": 0.0, "div_yield": 10.4, "rsi": 19.61, "ma50": 3695.0}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BBNI.JK", "price": 3560.0, "eps": 536.87, "per": 6.63, "pbv": 0.77, "roe": 0.1173, "der": 0.0, "div_yield": 9.44, "rsi": 23.93, "ma50": 4039.2}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BBRI.JK", "price": 3250.0, "eps": 376.16, "per": 8.64, "pbv": 1.51, "roe": 0.1746, "der": 0.0, "div_yield": 10.4, "rsi": 19.61, "ma50": 3695.0}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 2.15, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BBRI.JK", "price": 3250.0, "eps": 376.16, "per": 8.64, "pbv": 1.51, "roe": 0.1746, "der": 0.0, "div_yield": 0.104, "rsi": 19.61, "ma50": 3695.0}
+
+{"symbol": "BMRI.JK", "price": 4530.0, "eps": 603.11, "per": 7.51, "pbv": 1.44, "roe": 0.1914, "der": 0.0, "div_yield": 0.0215, "rsi": 33.04, "ma50": 4944.9}
+
+{"symbol": "BUMI.JK", "price": 238.0, "eps": 3.74, "per": 63.64, "pbv": 59500.0, "roe": 0.0425, "der": 0.15, "div_yield": 0.0, "rsi": 49.3, "ma50": 266.6}
+

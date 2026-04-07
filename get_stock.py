@@ -47,15 +47,24 @@ price = (
     float(hist['Close'].iloc[-1])
 )
 
+# DER — normalisasi (Yahoo return dalam persen, misal 523.5 = 5.235x)
+der_raw = float(data.get("debtToEquity") or 0)
+der = der_raw / 100 if der_raw > 10 else der_raw
+
+# DIV YIELD — normalisasi (Yahoo return 2.15, harusnya 0.0215)
+div_raw = float(data.get("dividendYield") or 0)
+div_yield = div_raw / 100 if div_raw > 1 else div_raw
+
 result = {
     "symbol": kode,
     "price": round(float(price), 0),
+    "eps":   round(float(data.get("trailingEps") or 0), 2),
     "per":   round(float(data.get("trailingPE") or 0), 2),
     "pbv":   round(float(data.get("priceToBook") or 0), 2),
     "roe":   round(float(data.get("returnOnEquity") or 0), 4),
-    "eps":   round(float(data.get("trailingEps") or 0), 2),
+    "der":   round(der, 2),
+    "div_yield": round(div_yield, 4),
     "rsi":   round(rsi_last, 2),
     "ma50":  round(ma50, 2)
 }
-
 print(json.dumps(result))
