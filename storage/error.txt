@@ -19,3 +19,8 @@ Stack trace:
 [07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 429
 [07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 429
 [07-Apr-2026 20:17:36 UTC] PHP Warning:  Undefined array key "per" in C:\laragon\www\bot\services\AnalysisService.php on line 323
+[08-Apr-2026 04:14:31 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function analisisKeputusan() in C:\laragon\www\bot\services\AnalysisService.php:520
+Stack trace:
+#0 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BNGA')
+#1 {main}
+  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 520

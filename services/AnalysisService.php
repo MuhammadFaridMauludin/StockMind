@@ -152,14 +152,14 @@ function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
         "div_status", "div_ket", "div_pct"
     );
 }
-
+/*
 function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal) {
 
     $score = 50; // base netral
     $notes = [];
 
     // ======================
-    // FUNDAMENTAL (max +30)
+    // FUNDAMENTAL
     // ======================
 
     // PER
@@ -198,7 +198,7 @@ function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma
     }
 
     // ======================
-    // TEKNIKAL (max +30)
+    // TEKNIKAL
     // ======================
 
     // Trend
@@ -263,6 +263,147 @@ function analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma
         "notes" => $notes,
         "hargawajar"=>$hargawajar,
         "valuasi"=>$valuasi
+    ];
+}
+    */
+function analisisKeputusanSAW($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal) {
+
+    $notes = [];
+
+    // ======================
+    // NORMALISASI (0–1)
+    // ======================
+
+    // PER
+    $nilai_per =
+        ($per > 0 && $per < 10) ? 1 :
+        ($per < 20 ? 0.7 :
+        ($per < 40 ? 0.4 : 0.1));
+
+    if ($per > 40) $notes[] = "Valuasi mahal";
+
+    // ROE
+    $nilai_roe = min($roe / 0.2, 1);
+    if ($roe < 0.08) $notes[] = "Profitabilitas rendah";
+
+    // DER
+    if ($der == 0) {
+        $nilai_der = 0.5;
+    } elseif ($der < 1) {
+        $nilai_der = 1;
+    } elseif ($der < 2) {
+        $nilai_der = 0.6;
+    } else {
+        $nilai_der = 0.2;
+        $notes[] = "Utang tinggi";
+    }
+
+    // DIVIDEND
+    if ($div_yield >= 0.02 && $div_yield <= 0.06) {
+        $nilai_div = 1;
+    } elseif ($div_yield > 0.06) {
+        $nilai_div = 0.7;
+    } elseif ($div_yield > 0) {
+        $nilai_div = 0.5;
+    } else {
+        $nilai_div = 0.3;
+    }
+
+    // RSI
+    $nilai_rsi =
+        ($rsi < 30) ? 1 :
+        ($rsi < 50 ? 0.6 :
+        ($rsi < 70 ? 0.3 : 0));
+
+    if ($rsi > 70) $notes[] = "Jenuh beli";
+
+    // TREND
+    if ($harga > $ma20 && $ma20 > $ma50) {
+        $nilai_trend = 1;
+    } elseif ($harga < $ma20 && $ma20 < $ma50) {
+        $nilai_trend = 0;
+        $notes[] = "Masih downtrend";
+    } else {
+        $nilai_trend = 0.5;
+    }
+
+    // SUPPORT
+    $distance = ($harga - $support) / $support;
+
+    if ($distance <= 0.02) {
+        $nilai_support = 1;
+    } elseif ($distance <= 0.05) {
+        $nilai_support = 0.7;
+    } else {
+        $nilai_support = 0.3;
+    }
+
+    // VOLUME
+    $nilai_volume = ($volume_signal == "high") ? 1 : 0.5;
+
+    // ======================
+    // BOBOT
+    // ======================
+    $bobot = [
+        "per" => 0.20,
+        "roe" => 0.25,
+        "der" => 0.10,
+        "div" => 0.05,
+        "rsi" => 0.10,
+        "trend" => 0.15,
+        "support" => 0.10,
+        "volume" => 0.05
+    ];
+
+    // ======================
+    // HITUNG SAW
+    // ======================
+    $score =
+        ($nilai_per * $bobot['per']) +
+        ($nilai_roe * $bobot['roe']) +
+        ($nilai_der * $bobot['der']) +
+        ($nilai_div * $bobot['div']) +
+        ($nilai_rsi * $bobot['rsi']) +
+        ($nilai_trend * $bobot['trend']) +
+        ($nilai_support * $bobot['support']) +
+        ($nilai_volume * $bobot['volume']);
+
+    $score = $score * 100;
+
+    // ======================
+    // REKOMENDASI
+    // ======================
+    if ($score >= 85) {
+        $rekom = "Strong Buy 🚀";
+    } elseif ($score >= 70) {
+        $rekom = "Buy 👍";
+    } elseif ($score >= 55) {
+        $rekom = "Buy on Weakness";
+    } elseif ($score >= 40) {
+        $rekom = "Wait & See";
+    } else {
+        $rekom = "Avoid ⚠️";
+    }
+
+    // ======================
+    // NILAI WAJAR
+    // ======================
+    $hargawajar = ($eps > 0) ? $eps * 8 : 0;
+
+    if ($harga > 0 && $eps > 0) {
+        $valuasi = ($harga < $hargawajar)
+            ? "Undervalued ✅"
+            : "Overvalued ❌";
+    } else {
+        $valuasi = "Tidak diketahui";
+    }
+
+    return [
+        "score" => round($score, 2),
+        "rekom" => $rekom,
+        "notes" => $notes,
+        "hargawajar" => $hargawajar,
+        "valuasi" => $valuasi
     ];
 }
 
@@ -376,7 +517,7 @@ function analisisSaham($kode) {
 
     $tek    = analisisTeknikal($harga, $rsi, $data["ma20"] ?? 0, $data["ma50"] ?? 0, $data["support"] ?? 0, $data["resistance"] ?? 0, $data["volume_signal"] ?? "low");
     $fund   = analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield);
-    $dec    = analisisKeputusan($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal);
+    $dec    = analisisKeputusanSAW($harga, $eps, $per, $roe, $der, $div_yield, $rsi, $ma20, $ma50, $support, $volume_signal);
     $insight = generateInsight($per, $roe, $rsi, $harga, $ma50);
     $narasi = generateNarasiAI($kode, [
     "trend" => $tek['trend'],
