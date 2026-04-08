@@ -1,62 +1,14 @@
-[07-Apr-2026 19:54:43 UTC] PHP Fatal error:  Uncaught ArgumentCountError: Too few arguments to function analisisKeputusan(), 8 passed in C:\laragon\www\bot\services\AnalysisService.php on line 330 and exactly 11 expected in C:\laragon\www\bot\services\AnalysisService.php:156
+[08-Apr-2026 14:52:29 UTC] PHP Warning:  file_put_contents(storage/log2.txt): Failed to open stream: No such file or directory in C:\laragon\www\bot\services\Dataservice.php on line 24
+[08-Apr-2026 14:52:32 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Cannot add or update a child row: a foreign key constraint fails (`stockmindd`.`data_saham`, CONSTRAINT `data_saham_ibfk_1` FOREIGN KEY (`kode`) REFERENCES `saham` (`kode`)) in C:\laragon\www\bot\services\Dataservice.php:87
 Stack trace:
-#0 C:\laragon\www\bot\services\AnalysisService.php(330): analisisKeputusan(4510.0, 603.45, 7.47, 0.1914, 0, 0.0217, 32.46, 4944.5)
-#1 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BMRI')
-#2 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 156
-[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 386
-[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 436
-[07-Apr-2026 20:04:22 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 436
-[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 397
-[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 447
-[07-Apr-2026 20:07:32 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 447
-[07-Apr-2026 20:08:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function generateNarasi() in C:\laragon\www\bot\services\AnalysisService.php:370
+#0 C:\laragon\www\bot\services\Dataservice.php(87): mysqli_stmt->execute()
+#1 C:\laragon\www\bot\services\Dataservice.php(30): DataService->simpanKeDB('BUMI', Array)
+#2 C:\laragon\www\bot\services\AnalysisService.php(133): DataService->getData('BUMI')
+#3 C:\laragon\www\bot\api\webhook.php(28): AnalysisService->analisisSaham('BUMI')
+#4 {main}
+  thrown in C:\laragon\www\bot\services\Dataservice.php on line 87
+[08-Apr-2026 14:55:57 UTC] PHP Fatal error:  Uncaught Error: Call to a member function hitungSAW() on null in C:\laragon\www\bot\services\AnalysisService.php:155
 Stack trace:
-#0 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BMRI')
+#0 C:\laragon\www\bot\api\webhook.php(28): AnalysisService->analisisSaham('BMRI')
 #1 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 370
-[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 374
-[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "hargawajar" in C:\laragon\www\bot\services\AnalysisService.php on line 429
-[07-Apr-2026 20:12:15 UTC] PHP Warning:  Undefined array key "valuasi" in C:\laragon\www\bot\services\AnalysisService.php on line 429
-[07-Apr-2026 20:17:36 UTC] PHP Warning:  Undefined array key "per" in C:\laragon\www\bot\services\AnalysisService.php on line 323
-[08-Apr-2026 04:14:31 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function analisisKeputusan() in C:\laragon\www\bot\services\AnalysisService.php:520
-Stack trace:
-#0 C:\laragon\www\bot\api\webhook.php(25): analisisSaham('BNGA')
-#1 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 520
-[08-Apr-2026 05:48:23 UTC] PHP Warning:  require_once(C:\laragon\www\bot\services/bot/services/ScoringService.php): Failed to open stream: No such file or directory in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 05:48:24 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\laragon\www\bot\services/bot/services/ScoringService.php' (include_path='.;C:/laragon/etc/php/pear') in C:\laragon\www\bot\services\AnalysisService.php:2
-Stack trace:
-#0 C:\laragon\www\bot\api\webhook.php(9): require_once()
-#1 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 05:49:45 UTC] PHP Warning:  require_once(C:\laragon\www\bot\services/bot/services/ScoringService.php): Failed to open stream: No such file or directory in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 05:49:45 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\laragon\www\bot\services/bot/services/ScoringService.php' (include_path='.;C:/laragon/etc/php/pear') in C:\laragon\www\bot\services\AnalysisService.php:2
-Stack trace:
-#0 C:\laragon\www\bot\api\webhook.php(9): require_once()
-#1 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 05:49:54 UTC] PHP Warning:  require_once(C:\laragon\www\bot\services/bot/services/ScoringService.php): Failed to open stream: No such file or directory in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 05:49:54 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\laragon\www\bot\services/bot/services/ScoringService.php' (include_path='.;C:/laragon/etc/php/pear') in C:\laragon\www\bot\services\AnalysisService.php:2
-Stack trace:
-#0 C:\laragon\www\bot\api\webhook.php(9): require_once()
-#1 {main}
-  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 2
-[08-Apr-2026 06:35:06 UTC] PHP Warning:  Undefined variable $namaSektor in C:\laragon\www\bot\api\webhook.php on line 34
-[08-Apr-2026 07:41:04 UTC] PHP Fatal error:  Allowed memory size of 536870912 bytes exhausted (tried to allocate 4096 bytes) in C:\laragon\www\bot\config\sektor.php on line 6
-[08-Apr-2026 12:52:51 UTC] PHP Fatal error:  Uncaught Error: Using $this when not in object context in C:\laragon\www\bot\config\Database.php:2
-Stack trace:
-#0 C:\laragon\www\bot\services\ScoringService.php(2): require_once()
-#1 C:\laragon\www\bot\services\AnalysisService.php(2): require_once('C:\\laragon\\www\\...')
-#2 C:\laragon\www\bot\api\webhook.php(10): require_once('C:\\laragon\\www\\...')
-#3 {main}
-  thrown in C:\laragon\www\bot\config\Database.php on line 2
-[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
-[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+  thrown in C:\laragon\www\bot\services\AnalysisService.php on line 155

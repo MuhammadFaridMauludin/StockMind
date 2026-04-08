@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../config/Database.php";
-
+require_once __DIR__ . "/DataService.php";
 class ScoringService {
 
     /*
@@ -117,125 +117,142 @@ class ScoringService {
         ];
     }
     */
-    public function hitungSAW($data) {
+    private function addScore(&$totalScore, &$totalBobot, $nilai, $bobot) {
+    if ($nilai !== null) {
+        $totalScore += $nilai * $bobot;
+        $totalBobot += $bobot;
+    }
+}
+public function hitungSAW($data) {
 
-        $harga = $data['price'];
-        $eps = $data['eps'];
-        $per = $data['per'];
-        $roe = $data['roe'];
-        $der = $data['der'];
-        $div = $data['div_yield'];
-        $rsi = $data['rsi'];
-        $ma20 = $data['ma20'];
-        $ma50 = $data['ma50'];
-        $support = $data['support'];
-        $volume = $data['volume_signal'];
+    $harga = $data['price'] ?? null;
+    $eps = $data['eps'] ?? null;
+    $per = $data['per'] ?? null;
+    $roe = $data['roe'] ?? null;
+    $der = $data['der'] ?? null;
+    $div = $data['div_yield'] ?? null;
+    $rsi = $data['rsi'] ?? null;
+    $ma20 = $data['ma20'] ?? null;
+    $ma50 = $data['ma50'] ?? null;
+    $support = $data['support'] ?? null;
+    $volume = $data['volume_signal'] ?? null;
 
-        $notes = [];
+    $notes = [];
 
-        // ======================
-        // NORMALISASI
-        // ======================
+    // ======================
+    // NORMALISASI
+    // ======================
 
-        $nilai_per =
-            ($per > 0 && $per < 10) ? 1 :
-            ($per < 20 ? 0.7 :
-            ($per < 40 ? 0.4 : 0.1));
+    $nilai_per = ($per > 0)
+        ? (($per < 10) ? 1 : ($per < 20 ? 0.7 : ($per < 40 ? 0.4 : 0.1)))
+        : null;
 
-        $nilai_roe = min($roe / 0.2, 1);
+    $nilai_roe = ($roe > 0) ? min($roe / 0.2, 1) : null;
 
-        if ($der == 0) $nilai_der = 0.5;
-        elseif ($der < 1) $nilai_der = 1;
-        elseif ($der < 2) $nilai_der = 0.6;
-        else {
-            $nilai_der = 0.2;
-            $notes[] = "Utang tinggi";
-        }
+    if ($der === null || $der == 0) {
+        $nilai_der = null;
+    } elseif ($der < 1) $nilai_der = 1;
+    elseif ($der < 2) $nilai_der = 0.6;
+    else {
+        $nilai_der = 0.2;
+        $notes[] = "Utang tinggi";
+    }
 
-        if ($div >= 0.02 && $div <= 0.06) $nilai_div = 1;
-        elseif ($div > 0.06) $nilai_div = 0.7;
-        elseif ($div > 0) $nilai_div = 0.5;
-        else $nilai_div = 0.3;
+    $nilai_div = ($div > 0)
+        ? (($div >= 0.02 && $div <= 0.06) ? 1 :
+        ($div > 0.06 ? 0.7 : 0.5))
+        : null;
 
-        $nilai_rsi =
-            ($rsi < 30) ? 1 :
-            ($rsi < 50 ? 0.6 :
-            ($rsi < 70 ? 0.3 : 0));
+    $nilai_rsi = ($rsi !== null)
+        ? (($rsi < 30) ? 1 :
+           ($rsi < 50 ? 0.6 :
+           ($rsi < 70 ? 0.3 : 0)))
+        : null;
 
-        if ($rsi > 70) $notes[] = "Jenuh beli";
+    if ($rsi > 70) $notes[] = "Jenuh beli";
 
+    // TREND
+    if ($ma20 && $ma50 && $harga) {
         if ($harga > $ma20 && $ma20 > $ma50) $nilai_trend = 1;
         elseif ($harga < $ma20 && $ma20 < $ma50) {
             $nilai_trend = 0;
             $notes[] = "Masih downtrend";
         } else $nilai_trend = 0.5;
+    } else {
+        $nilai_trend = null;
+    }
 
+    // SUPPORT
+    if ($support > 0 && $harga) {
         $distance = ($harga - $support) / $support;
         if ($distance <= 0.02) $nilai_support = 1;
         elseif ($distance <= 0.05) $nilai_support = 0.7;
         else $nilai_support = 0.3;
-
-        $nilai_volume = ($volume == "high") ? 1 : 0.5;
-
-        // ======================
-        // BOBOT
-        // ======================
-        $bobot = [
-            "per" => 0.20,
-            "roe" => 0.25,
-            "der" => 0.10,
-            "div" => 0.05,
-            "rsi" => 0.10,
-            "trend" => 0.15,
-            "support" => 0.10,
-            "volume" => 0.05
-        ];
-
-        // ======================
-        // HITUNG
-        // ======================
-        $score =
-            ($nilai_per * $bobot['per']) +
-            ($nilai_roe * $bobot['roe']) +
-            ($nilai_der * $bobot['der']) +
-            ($nilai_div * $bobot['div']) +
-            ($nilai_rsi * $bobot['rsi']) +
-            ($nilai_trend * $bobot['trend']) +
-            ($nilai_support * $bobot['support']) +
-            ($nilai_volume * $bobot['volume']);
-
-        $score *= 100;
-
-        // ======================
-        // REKOMENDASI
-        // ======================
-        if ($score >= 85) $rekom = "Strong Buy 🚀";
-        elseif ($score >= 70) $rekom = "Buy 👍";
-        elseif ($score >= 55) $rekom = "Buy on Weakness";
-        elseif ($score >= 40) $rekom = "Wait & See";
-        else $rekom = "Avoid ⚠️";
-
-        // NILAI WAJAR
-        $hargawajar = ($eps > 0) ? $eps * 8 : 0;
-        $valuasi = ($harga < $hargawajar) ? "Undervalued ✅" : "Overvalued ❌";
-
-        return [
-            "score" => round($score, 2),
-            "rekom" => $rekom,
-            "notes" => $notes,
-            "valuasi" => $valuasi,
-            "hargawajar" => $hargawajar
-        ];
+    } else {
+        $nilai_support = null;
     }
-public function rankingSektor($namaSektor) {
+
+    $nilai_volume = ($volume == "high") ? 1 : ($volume ? 0.5 : null);
+
+    // ======================
+    // BOBOT
+    // ======================
+    $bobot = [
+        "per" => 0.20,
+        "roe" => 0.25,
+        "der" => 0.10,
+        "div" => 0.05,
+        "rsi" => 0.10,
+        "trend" => 0.15,
+        "support" => 0.10,
+        "volume" => 0.05
+    ];
+
+    // ======================
+    // HITUNG (ADAPTIVE)
+    // ======================
+    $totalScore = 0;
+    $totalBobot = 0;
+
+    $this->addScore($totalScore, $totalBobot, $nilai_per, $bobot['per']);
+    $this->addScore($totalScore, $totalBobot, $nilai_roe, $bobot['roe']);
+    $this->addScore($totalScore, $totalBobot, $nilai_der, $bobot['der']);
+    $this->addScore($totalScore, $totalBobot, $nilai_div, $bobot['div']);
+    $this->addScore($totalScore, $totalBobot, $nilai_rsi, $bobot['rsi']);
+    $this->addScore($totalScore, $totalBobot, $nilai_trend, $bobot['trend']);
+    $this->addScore($totalScore, $totalBobot, $nilai_support, $bobot['support']);
+    $this->addScore($totalScore, $totalBobot, $nilai_volume, $bobot['volume']);
+
+    $score = ($totalBobot > 0) ? ($totalScore / $totalBobot) * 100 : 0;
+
+    // ======================
+    // REKOMENDASI
+    // ======================
+    if ($score >= 85) $rekom = "Strong Buy 🚀";
+    elseif ($score >= 70) $rekom = "Buy 👍";
+    elseif ($score >= 55) $rekom = "Buy on Weakness";
+    elseif ($score >= 40) $rekom = "Wait & See";
+    else $rekom = "Avoid ⚠️";
+
+    // NILAI WAJAR
+    $hargawajar = ($eps > 0) ? $eps * 8 : 0;
+    $valuasi = ($harga < $hargawajar) ? "Undervalued ✅" : "Overvalued ❌";
+
+    return [
+        "score" => round($score, 2),
+        "rekom" => $rekom,
+        "notes" => $notes,
+        "valuasi" => $valuasi,
+        "hargawajar" => $hargawajar
+    ];
+}
+    public function rankingSektor($namaSektor) {
 
     require_once __DIR__ . "/../config/Database.php";
-    require_once __DIR__ . "/StockService.php";
 
     $db = new Database();
     $conn = $db->getConnection();
 
-    // 🔹 Ambil saham dari DB
     $stmt = $conn->prepare("
         SELECT s.kode 
         FROM saham s
@@ -251,24 +268,16 @@ public function rankingSektor($namaSektor) {
     if ($result->num_rows == 0) return [];
 
     $hasil = [];
-    $stockService = new StockService();
+
+    $dataService = new DataService();
 
     while ($row = $result->fetch_assoc()) {
         $kode = $row['kode'];
 
-        // 🔹 Ambil data dari DB dulu
-        $data = $this->getDataDariDB($conn, $kode);
+        $data = $dataService->getData($kode);
 
-if (!$data || !$this->isFresh($data['updated_at'])) {
+        if (!$data) continue;
 
-    file_put_contents("storage/log2.txt", "REFRESH API: $kode\n", FILE_APPEND);
-
-    $data = $stockService->getDataSaham($kode);
-
-    if (!$data || isset($data["error"])) continue;
-
-    $this->simpanKeDB($conn, $kode, $data);
-}
         $score = $this->hitungSAW($data);
 
         $hasil[] = [
@@ -280,57 +289,6 @@ if (!$data || !$this->isFresh($data['updated_at'])) {
     usort($hasil, fn($a, $b) => $b['score'] <=> $a['score']);
 
     return $hasil;
-}
-private function getDataDariDB($conn, $kode) {
-    $stmt = $conn->prepare("SELECT * FROM data_saham WHERE kode = ?");
-    $stmt->bind_param("s", $kode);
-    $stmt->execute();
-
-    return $stmt->get_result()->fetch_assoc();
-}
-private function isFresh($updated_at) {
-    if (!$updated_at) return false;
-
-    return (time() - strtotime($updated_at)) < 300; // 5 menit
-}
-private function simpanKeDB($conn, $kode, $data) {
-
-    $stmt = $conn->prepare("
-        INSERT INTO data_saham 
-        (kode, harga, eps, per, roe, der, div_yield, rsi, ma20, ma50, support, volume_signal, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE
-        harga=VALUES(harga),
-        eps=VALUES(eps),
-        per=VALUES(per),
-        roe=VALUES(roe),
-        der=VALUES(der),
-        div_yield=VALUES(div_yield),
-        rsi=VALUES(rsi),
-        ma20=VALUES(ma20),
-        ma50=VALUES(ma50),
-        support=VALUES(support),
-        volume_signal=VALUES(volume_signal),
-        updated_at=NOW()
-    ");
-
-    $stmt->bind_param(
-        "sdddddddddds",
-        $kode,
-        $data['price'],
-        $data['eps'],
-        $data['per'],
-        $data['roe'],
-        $data['der'],
-        $data['div_yield'],
-        $data['rsi'],
-        $data['ma20'],
-        $data['ma50'],
-        $data['support'],
-        $data['volume_signal']
-    );
-
-    $stmt->execute();
 }
 public function formatRanking($namaSektor, $ranking) {
     if (empty($ranking)) {

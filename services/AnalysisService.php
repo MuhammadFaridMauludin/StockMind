@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__ . "/ScoringService.php";
 require_once __DIR__ . "/StockService.php";
-$scoring = new ScoringService();
-$stockService = new StockService();
+require_once __DIR__ . "/DataService.php";
 
 class AnalysisService{
 function analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $volume_signal) {
@@ -43,35 +42,107 @@ function analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $vo
 
 function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
 
-    $eps_ket = ($eps > 0) ? "Perusahaan menghasilkan laba positif" : "Perusahaan belum menghasilkan laba";
+    if ($eps === null || $eps == 0) {
+        $eps_ket = "Data tidak tersedia";
+    } else {
+        $eps_ket = ($eps > 0)
+            ? "Perusahaan menghasilkan laba positif"
+            : "Perusahaan belum menghasilkan laba";
+    }
 
-    if ($per < 5 && $per > 0)  { $per_status = "Sangat murah 🟢"; $per_ket = "Valuasi sangat rendah, bisa undervalued atau ada risiko bisnis"; }
-    elseif ($per < 10)          { $per_status = "Murah ✅";         $per_ket = "Valuasi lebih rendah dari rata-rata pasar"; }
-    elseif ($per <= 20)         { $per_status = "Wajar";            $per_ket = "Harga sesuai dengan kinerja perusahaan"; }
-    else                        { $per_status = "Mahal ❌";         $per_ket = "Harga relatif tinggi dibanding laba"; }
 
-    if ($pbv < 1)       { $pbv_status = "Murah ✅";   $pbv_ket = "Harga di bawah nilai buku (undervalued)"; }
-    elseif ($pbv <= 2)  { $pbv_status = "Wajar";      $pbv_ket = "Masih dalam batas normal"; }
-    else                { $pbv_status = "Tinggi ❌";   $pbv_ket = "Harga cukup mahal dibanding nilai aset"; }
+    if ($per === null || $per <= 0) {
+        $per_status = "Tidak tersedia";
+        $per_ket = "Data PER tidak tersedia";
+    } elseif ($per < 5) {
+        $per_status = "Sangat murah 🟢";
+        $per_ket = "Valuasi sangat rendah, bisa undervalued atau ada risiko bisnis";
+    } elseif ($per < 10) {
+        $per_status = "Murah ✅";
+        $per_ket = "Valuasi lebih rendah dari rata-rata pasar";
+    } elseif ($per <= 20) {
+        $per_status = "Wajar";
+        $per_ket = "Harga sesuai dengan kinerja perusahaan";
+    } else {
+        $per_status = "Mahal ❌";
+        $per_ket = "Harga relatif tinggi dibanding laba";
+    }
 
-    $roe_percent = $roe * 100;
-    if ($roe > 0.15)      { $roe_status = "Bagus ✅"; $roe_ket = "Perusahaan efisien menghasilkan laba"; }
-    elseif ($roe > 0.08)  { $roe_status = "Cukup";   $roe_ket = "Profitabilitas cukup stabil"; }
-    else                  { $roe_status = "Kurang ❌"; $roe_ket = "Efisiensi menghasilkan laba masih rendah"; }
+    if ($pbv === null || $pbv == 0) {
+        $pbv_status = "Tidak tersedia";
+        $pbv_ket = "Data PBV tidak tersedia";
+    } elseif ($pbv < 1) {
+        $pbv_status = "Murah ✅";
+        $pbv_ket = "Harga di bawah nilai buku (undervalued)";
+    } elseif ($pbv <= 2) {
+        $pbv_status = "Wajar";
+        $pbv_ket = "Masih dalam batas normal";
+    } else {
+        $pbv_status = "Tinggi ❌";
+        $pbv_ket = "Harga cukup mahal dibanding nilai aset";
+    }
 
-    if ($der === 0 || $der === null) {
-        $der_status = "Tidak tersedia"; $der_ket = "Data DER tidak tersedia"; $der_display = "-";
-    } elseif ($der < 1)  { $der_status = "Sehat ✅";  $der_ket = "Struktur modal aman, utang rendah";       $der_display = $der; }
-    elseif ($der <= 2)   { $der_status = "Cukup";     $der_ket = "Utang masih dalam batas wajar";           $der_display = $der; }
-    else                 { $der_status = "Tinggi ❌";  $der_ket = "Risiko utang tinggi, perlu hati-hati";    $der_display = $der; }
+    if ($roe === null || $roe == 0) {
+        $roe_status = "Tidak tersedia";
+        $roe_ket = "Data ROE tidak tersedia";
+        $roe_percent = 0;
+    } else {
+        $roe_percent = $roe * 100;
 
-    $div_pct = $div_yield * 100;
-    if ($div_yield == 0)           { $div_status = "Tidak ada dividen";    $div_ket = "Perusahaan tidak membagikan dividen"; }
-    elseif ($div_yield < 0.03)     { $div_status = "Rendah";               $div_ket = "Yield kecil, fokus ekspansi/growth"; }
-    elseif ($div_yield <= 0.06)    { $div_status = "Menarik ✅";           $div_ket = "Yield sehat dan cukup stabil"; }
-    elseif ($div_yield <= 0.09)    { $div_status = "Tinggi";               $div_ket = "Yield menarik, masih batas wajar"; }
-    elseif ($div_yield <= 0.14)    { $div_status = "Sangat Tinggi ⚠️";    $div_ket = "Perlu cek keberlanjutan dividen"; }
-    else                           { $div_status = "Ekstrem 🚨";           $div_ket = "Yield tidak wajar, waspadai anomali"; }
+        if ($roe > 0.15) {
+            $roe_status = "Bagus ✅";
+            $roe_ket = "Perusahaan efisien menghasilkan laba";
+        } elseif ($roe > 0.08) {
+            $roe_status = "Cukup";
+            $roe_ket = "Profitabilitas cukup stabil";
+        } else {
+            $roe_status = "Kurang ❌";
+            $roe_ket = "Efisiensi menghasilkan laba masih rendah";
+        }
+    }
+
+    if ($der === null || $der == 0) {
+        $der_status = "Tidak tersedia";
+        $der_ket = "Data DER tidak tersedia";
+        $der_display = "-";
+    } elseif ($der < 1) {
+        $der_status = "Sehat ✅";
+        $der_ket = "Struktur modal aman, utang rendah";
+        $der_display = $der;
+    } elseif ($der <= 2) {
+        $der_status = "Cukup";
+        $der_ket = "Utang masih dalam batas wajar";
+        $der_display = $der;
+    } else {
+        $der_status = "Tinggi ❌";
+        $der_ket = "Risiko utang tinggi, perlu hati-hati";
+        $der_display = $der;
+    }
+
+    if ($div_yield === null || $div_yield == 0) {
+        $div_status = "Tidak tersedia";
+        $div_ket = "Data dividen tidak tersedia";
+        $div_pct = 0;
+    } else {
+        $div_pct = $div_yield * 100;
+
+        if ($div_yield < 0.03) {
+            $div_status = "Rendah";
+            $div_ket = "Yield kecil, fokus ekspansi/growth";
+        } elseif ($div_yield <= 0.06) {
+            $div_status = "Menarik ✅";
+            $div_ket = "Yield sehat dan cukup stabil";
+        } elseif ($div_yield <= 0.09) {
+            $div_status = "Tinggi";
+            $div_ket = "Yield menarik, masih batas wajar";
+        } elseif ($div_yield <= 0.14) {
+            $div_status = "Sangat Tinggi ⚠️";
+            $div_ket = "Perlu cek keberlanjutan dividen";
+        } else {
+            $div_status = "Ekstrem 🚨";
+            $div_ket = "Yield tidak wajar, waspadai anomali";
+        }
+    }
 
     return compact(
         "eps_ket",
@@ -128,14 +199,13 @@ function generateNarasiAI($kode, $data) {
 // MAIN
 // =====================
 function analisisSaham($kode) {
-    global $scoring; // ← fix: akses $scoring dari scope global
-
-    $stockService = new StockService();
-    $data = $stockService->getDataSaham($kode);
+    $dataService = new DataService();
+    $data = $dataService->getData($kode);
 
     if (!$data || isset($data["error"])) {
         return "❌ Gagal mengambil data untuk saham $kode. Pastikan kode saham benar.";
     }
+    $scoring = new ScoringService();
 
     $harga        = $data["price"]         ?? 0;
     $eps          = $data["eps"]           ?? 0;
