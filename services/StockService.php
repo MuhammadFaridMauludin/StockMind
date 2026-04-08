@@ -1,4 +1,5 @@
 <?php
+class StockService{
 function getDataSaham($kode) {
     $kode = escapeshellarg($kode);
     
@@ -11,4 +12,5 @@ function getDataSaham($kode) {
     
     $data = json_decode($output, true);
     return $data;
+}
 }

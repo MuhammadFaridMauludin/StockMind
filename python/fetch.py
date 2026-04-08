@@ -34,8 +34,11 @@ def safe_float(value, default=0.0):
 ma20_series = hist['Close'].rolling(window=20).mean()
 ma50_series = hist['Close'].rolling(window=50).mean()
 
-ma20 = safe_float(ma20_series.iloc[-1], hist['Close'].mean())
-ma50 = safe_float(ma50_series.iloc[-1], hist['Close'].mean())
+ma20_raw = ma20_series.iloc[-1]
+ma20 = float(ma20_raw) if not math.isnan(ma20_raw) else float(hist['Close'].mean())
+
+ma50_raw = ma50_series.iloc[-1]
+ma50 = float(ma50_raw) if not math.isnan(ma50_raw) else float(hist['Close'].mean())
 
 last_price = float(hist['Close'].iloc[-1])
 
@@ -113,7 +116,7 @@ div_yield = div_raw / 100 if div_raw > 1 else div_raw
 # ======================
 result = {
     "symbol": kode,
-    "price": round(price, 0),
+    "price": round(float(price), 0),
 
     # FUNDAMENTAL
     "eps": round(safe_float(data.get("trailingEps")), 2),
