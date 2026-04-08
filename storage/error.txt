@@ -44,3 +44,19 @@ Stack trace:
   thrown in C:\laragon\www\bot\services\AnalysisService.php on line 2
 [08-Apr-2026 06:35:06 UTC] PHP Warning:  Undefined variable $namaSektor in C:\laragon\www\bot\api\webhook.php on line 34
 [08-Apr-2026 07:41:04 UTC] PHP Fatal error:  Allowed memory size of 536870912 bytes exhausted (tried to allocate 4096 bytes) in C:\laragon\www\bot\config\sektor.php on line 6
+[08-Apr-2026 12:52:51 UTC] PHP Fatal error:  Uncaught Error: Using $this when not in object context in C:\laragon\www\bot\config\Database.php:2
+Stack trace:
+#0 C:\laragon\www\bot\services\ScoringService.php(2): require_once()
+#1 C:\laragon\www\bot\services\AnalysisService.php(2): require_once('C:\\laragon\\www\\...')
+#2 C:\laragon\www\bot\api\webhook.php(10): require_once('C:\\laragon\\www\\...')
+#3 {main}
+  thrown in C:\laragon\www\bot\config\Database.php on line 2
+[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:14:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:31 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122
+[08-Apr-2026 13:18:47 UTC] PHP Warning:  Undefined array key "price" in C:\laragon\www\bot\services\ScoringService.php on line 122

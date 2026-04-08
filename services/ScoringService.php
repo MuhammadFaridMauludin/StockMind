@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../config/Database.php";
 
 class ScoringService {
 
@@ -226,19 +227,48 @@ class ScoringService {
             "hargawajar" => $hargawajar
         ];
     }
-    public function rankingSektor($namaSektor) {
-    global $SEKTOR;
-    file_put_contents("C:/laragon/www/bot/storage/log2.txt", "SEKTOR_VAR: " . print_r($SEKTOR, true) . "\n", FILE_APPEND);
-    if (!isset($SEKTOR[$namaSektor])) return [];
+public function rankingSektor($namaSektor) {
+
+    require_once __DIR__ . "/../config/Database.php";
+    require_once __DIR__ . "/StockService.php";
+
+    $db = new Database();
+    $conn = $db->getConnection();
+
+    // 🔹 Ambil saham dari DB
+    $stmt = $conn->prepare("
+        SELECT s.kode 
+        FROM saham s
+        JOIN sektor sec ON s.sektor_id = sec.id
+        WHERE LOWER(sec.nama) = ?
+    ");
+
+    $stmt->bind_param("s", $namaSektor);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 0) return [];
 
     $hasil = [];
+    $stockService = new StockService();
 
-    foreach ($SEKTOR[$namaSektor] as $kode) {
-        $stockService = new StockService();
-        $data = $stockService->getDataSaham($kode);
+    while ($row = $result->fetch_assoc()) {
+        $kode = $row['kode'];
 
-        if (!$data || isset($data["error"])) continue;
+        // 🔹 Ambil data dari DB dulu
+        $data = $this->getDataDariDB($conn, $kode);
 
+if (!$data || !$this->isFresh($data['updated_at'])) {
+
+    file_put_contents("storage/log2.txt", "REFRESH API: $kode\n", FILE_APPEND);
+
+    $data = $stockService->getDataSaham($kode);
+
+    if (!$data || isset($data["error"])) continue;
+
+    $this->simpanKeDB($conn, $kode, $data);
+}
         $score = $this->hitungSAW($data);
 
         $hasil[] = [
@@ -250,6 +280,57 @@ class ScoringService {
     usort($hasil, fn($a, $b) => $b['score'] <=> $a['score']);
 
     return $hasil;
+}
+private function getDataDariDB($conn, $kode) {
+    $stmt = $conn->prepare("SELECT * FROM data_saham WHERE kode = ?");
+    $stmt->bind_param("s", $kode);
+    $stmt->execute();
+
+    return $stmt->get_result()->fetch_assoc();
+}
+private function isFresh($updated_at) {
+    if (!$updated_at) return false;
+
+    return (time() - strtotime($updated_at)) < 300; // 5 menit
+}
+private function simpanKeDB($conn, $kode, $data) {
+
+    $stmt = $conn->prepare("
+        INSERT INTO data_saham 
+        (kode, harga, eps, per, roe, der, div_yield, rsi, ma20, ma50, support, volume_signal, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+        harga=VALUES(harga),
+        eps=VALUES(eps),
+        per=VALUES(per),
+        roe=VALUES(roe),
+        der=VALUES(der),
+        div_yield=VALUES(div_yield),
+        rsi=VALUES(rsi),
+        ma20=VALUES(ma20),
+        ma50=VALUES(ma50),
+        support=VALUES(support),
+        volume_signal=VALUES(volume_signal),
+        updated_at=NOW()
+    ");
+
+    $stmt->bind_param(
+        "sdddddddddds",
+        $kode,
+        $data['price'],
+        $data['eps'],
+        $data['per'],
+        $data['roe'],
+        $data['der'],
+        $data['div_yield'],
+        $data['rsi'],
+        $data['ma20'],
+        $data['ma50'],
+        $data['support'],
+        $data['volume_signal']
+    );
+
+    $stmt->execute();
 }
 public function formatRanking($namaSektor, $ranking) {
     if (empty($ranking)) {
