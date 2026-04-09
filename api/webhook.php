@@ -41,7 +41,7 @@ if (strpos($text, "RANKING SEKTOR") !== false) {
         return;
     }
 
-    $namaSektor = strtolower(end($parts));
+    $namaSektor = strtolower(implode(" ", array_slice($parts, 2)));
 
     file_put_contents("C:/laragon/www/bot/storage/log2.txt", "SEKTOR: $namaSektor\n", FILE_APPEND);
 
@@ -51,4 +51,68 @@ if (strpos($text, "RANKING SEKTOR") !== false) {
     $response = $scoring->formatRanking($namaSektor, $ranking);
 
     kirimPesan($chat_id, $response);
+}
+if (strpos($text, "RANKING INDEKS") !== false) {
+
+    $parts = explode(" ", $text);
+
+    if (count($parts) < 3) {
+        kirimPesan($chat_id, "❌ Contoh: ranking indeks lq45");
+        return;
+    }
+
+    $namaIndeks = strtolower(trim(implode(" ", array_slice($parts, 2))));
+
+    $alias = [
+        "lq 45" => "lq45",
+        "esg" => "esg leaders"
+    ];
+
+    $namaIndeks = $alias[$namaIndeks] ?? $namaIndeks;
+
+    $scoring = new ScoringService();
+
+    $ranking = $scoring->rankingIndeks($namaIndeks);
+    $response = $scoring->formatRanking("INDEKS " . $namaIndeks, $ranking);
+
+    kirimPesan($chat_id, $response);
+}
+if ($text == "MENU" || $text == "HELP") {
+
+    $menu = "
+🤖 *STOCKMIND BOT*
+
+Berikut perintah yang bisa kamu gunakan:
+
+📊 ANALISIS SAHAM
+Ketik:
+analisis saham bbri
+
+📈 RANKING SEKTOR
+Ketik:
+ranking sektor bank
+ranking sektor energi
+ranking sektor barang baku
+
+📊 RANKING INDEKS
+Ketik:
+ranking indeks lq45
+ranking indeks idx30
+ranking indeks jii
+ranking indeks issi
+
+💡 Tips:
+- Gunakan huruf bebas (besar/kecil tidak masalah)
+- Bisa pakai spasi (contoh: barang baku)
+
+🚀 Contoh cepat:
+analisis saham bbca
+ranking sektor keuangan
+ranking indeks lq45
+";
+
+    kirimPesan($chat_id, $menu);
+}
+if ($text == "HI" || $text == "HALO") {
+    kirimPesan($chat_id, "Halo 👋\nKetik MENU untuk mulai.");
 }

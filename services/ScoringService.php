@@ -288,19 +288,64 @@ public function hitungSAW($data) {
 
     usort($hasil, fn($a, $b) => $b['score'] <=> $a['score']);
 
-    return $hasil;
+    return array_slice($hasil, 0, 20);
 }
 public function formatRanking($namaSektor, $ranking) {
     if (empty($ranking)) {
         return "❌ Data sektor tidak ditemukan.";
     }
 
-    $text = "📊 RANKING SAHAM SEKTOR " . strtoupper($namaSektor) . "\n\n";
+    $text = "📊 RANKING SAHAM " . strtoupper($namaSektor) . "\n\n";
 
     foreach ($ranking as $i => $item) {
         $text .= ($i+1) . ". {$item['kode']} - Score: {$item['score']}\n";
     }
 
     return $text;
+}
+public function rankingIndeks($namaIndeks) {
+
+    require_once __DIR__ . "/../config/Database.php";
+
+    $db = new Database();
+    $conn = $db->getConnection();
+
+    $namaIndeks = strtolower(trim($namaIndeks));
+
+    $stmt = $conn->prepare("
+        SELECT s.kode
+        FROM saham s
+        JOIN saham_indeks si ON s.kode = si.saham_kode
+        JOIN indeks i ON si.indeks_id = i.id
+        WHERE LOWER(i.nama) = ?
+    ");
+
+    $stmt->bind_param("s", $namaIndeks);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 0) return [];
+
+    $hasil = [];
+    $dataService = new DataService();
+
+    while ($row = $result->fetch_assoc()) {
+        $kode = $row['kode'];
+
+        $data = $dataService->getData($kode);
+        if (!$data) continue;
+
+        $score = $this->hitungSAW($data);
+
+        $hasil[] = [
+            "kode" => $kode,
+            "score" => $score["score"]
+        ];
+    }
+
+    usort($hasil, fn($a, $b) => $b['score'] <=> $a['score']);
+
+    return array_slice($hasil, 0, 20); 
 }
 }
