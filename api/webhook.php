@@ -3,8 +3,6 @@ error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', 'C:/laragon/www/bot/storage/error.txt');
 
-$SEKTOR = require "C:/laragon/www/bot/config/sektor.php";
-
 require_once "C:/laragon/www/bot/config/config.php";
 require_once "C:/laragon/www/bot/services/StockService.php";
 require_once "C:/laragon/www/bot/services/AnalysisService.php";
@@ -19,100 +17,173 @@ $text = strtoupper(trim($update["message"]["text"] ?? ""));
 
 file_put_contents("C:/laragon/www/bot/storage/log2.txt", "TEXT: $text" . PHP_EOL, FILE_APPEND);
 
-if (strpos($text, "ANALISIS SAHAM") !== false) {
-    $kode = trim(str_replace("ANALISIS SAHAM", "", $text));
 
-    file_put_contents("C:/laragon/www/bot/storage/log2.txt", "KODE: $kode" . PHP_EOL, FILE_APPEND);
+// ======================
+// MENU UTAMA
+// ======================
+function menuUtama($chat_id) {
+    $keyboard = [
+        "keyboard" => [
+            ["Analisis Saham", "Ranking Sektor"],
+            ["Ranking Indeks"]
+        ],
+        "resize_keyboard" => true
+    ];
+
+    kirimPesan($chat_id, "🤖 STOCKMIND BOT\nPilih menu:", $keyboard);
+}
+
+
+// ======================
+// BACK BUTTON
+// ======================
+if ($text == "⬅️ MENU") {
+    menuUtama($chat_id);
+    return;
+}
+
+
+// ======================
+// START / HELP / MENU
+// ======================
+if ($text == "MENU" || $text == "HELP" || $text == "/START") {
+    menuUtama($chat_id);
+    return;
+}
+
+
+// ======================
+// ANALISIS SAHAM
+// ======================
+if ($text == "ANALISIS SAHAM") {
+    kirimPesan($chat_id, "Ketik:\nanalisis saham bbri", [
+        "keyboard" => [["⬅️ MENU"]],
+        "resize_keyboard" => true
+    ]);
+    return;
+}
+
+if (strpos($text, "ANALISIS SAHAM") !== false) {
+
+    $kode = trim(str_replace("ANALISIS SAHAM", "", $text));
 
     $analysis = new AnalysisService();
     $hasil = $analysis->analisisSaham($kode);
-    
-    file_put_contents("C:/laragon/www/bot/storage/log2.txt", "HASIL: $hasil" . PHP_EOL, FILE_APPEND);
-    
-    kirimPesan($chat_id, $hasil);
+
+    kirimPesan($chat_id, $hasil, [
+        "keyboard" => [["⬅️ MENU"]],
+        "resize_keyboard" => true
+    ]);
+    return;
 }
-if (strpos($text, "RANKING SEKTOR") !== false) {
 
-    $parts = explode(" ", $text);
 
-    // pastikan minimal ada 3 kata
-    if (count($parts) < 3) {
-        kirimPesan($chat_id, "❌ Format salah. Contoh: ranking sektor bank");
-        return;
-    }
+// ======================
+// RANKING SEKTOR (TOMBOL)
+// ======================
+if ($text == "RANKING SEKTOR") {
 
-    $namaSektor = strtolower(implode(" ", array_slice($parts, 2)));
+    $keyboard = [
+    "keyboard" => [
+        ["KEUANGAN", "ENERGI"],
+        ["BARANG BAKU", "INDUSTRI"],
+        ["INFRASTRUKTUR", "KESEHATAN"],
+        ["TEKNOLOGI"],
+        ["KONSUMEN PRIMER", "KONSUMEN NON-PRIMER"],
+        ["PROPERTI & REAL ESTATE"],
+        ["TRANSPORTASI & LOGISTIK"],
+        ["⬅️ MENU"]
+    ],
+    "resize_keyboard" => true
+];
 
-    file_put_contents("C:/laragon/www/bot/storage/log2.txt", "SEKTOR: $namaSektor\n", FILE_APPEND);
+    kirimPesan($chat_id, "📊 Pilih sektor:", $keyboard);
+    return;
+}
+
+
+// ======================
+// HANDLE KLIK SEKTOR
+// ======================
+$daftarSektor = [
+    "KEUANGAN",
+    "ENERGI",
+    "BARANG BAKU",
+    "INDUSTRI",
+    "INFRASTRUKTUR",
+    "KESEHATAN",
+    "TEKNOLOGI",
+    "KONSUMEN PRIMER",
+    "KONSUMEN NON-PRIMER",
+    "PROPERTI & REAL ESTATE",
+    "TRANSPORTASI & LOGISTIK"
+];
+
+if (in_array($text, $daftarSektor)) {
+
+    $namaSektor = strtolower($text);
 
     $scoring = new ScoringService();
-
     $ranking = $scoring->rankingSektor($namaSektor);
     $response = $scoring->formatRanking($namaSektor, $ranking);
 
-    kirimPesan($chat_id, $response);
+    kirimPesan($chat_id, $response, [
+        "keyboard" => [["⬅️ MENU"]],
+        "resize_keyboard" => true
+    ]);
+    return;
 }
-if (strpos($text, "RANKING INDEKS") !== false) {
 
-    $parts = explode(" ", $text);
 
-    if (count($parts) < 3) {
-        kirimPesan($chat_id, "❌ Contoh: ranking indeks lq45");
-        return;
-    }
+// ======================
+// RANKING INDEKS (TOMBOL)
+// ======================
+if ($text == "RANKING INDEKS") {
 
-    $namaIndeks = strtolower(trim(implode(" ", array_slice($parts, 2))));
-
-    $alias = [
-        "lq 45" => "lq45",
-        "esg" => "esg leaders"
+    $keyboard = [
+        "keyboard" => [
+            ["LQ45", "IDX30"],
+            ["IDX80", "JII"],
+            ["ISSI", "ESG"],
+            ["⬅️ MENU"]
+        ],
+        "resize_keyboard" => true
     ];
 
-    $namaIndeks = $alias[$namaIndeks] ?? $namaIndeks;
+    kirimPesan($chat_id, "📊 Pilih indeks:", $keyboard);
+    return;
+}
+
+
+// ======================
+// HANDLE KLIK INDEKS
+// ======================
+$daftarIndeks = ["LQ45", "IDX30", "IDX80", "JII", "ISSI", "ESG"];
+
+if (in_array($text, $daftarIndeks)) {
+
+    $namaIndeks = strtolower($text);
+
+    if ($namaIndeks == "esg") {
+        $namaIndeks = "esg leaders";
+    }
 
     $scoring = new ScoringService();
-
     $ranking = $scoring->rankingIndeks($namaIndeks);
     $response = $scoring->formatRanking("INDEKS " . $namaIndeks, $ranking);
 
-    kirimPesan($chat_id, $response);
+    kirimPesan($chat_id, $response, [
+        "keyboard" => [["⬅️ MENU"]],
+        "resize_keyboard" => true
+    ]);
+    return;
 }
-if ($text == "MENU" || $text == "HELP") {
 
-    $menu = "
-🤖 *STOCKMIND BOT*
 
-Berikut perintah yang bisa kamu gunakan:
-
-📊 ANALISIS SAHAM
-Ketik:
-analisis saham bbri
-
-📈 RANKING SEKTOR
-Ketik:
-ranking sektor bank
-ranking sektor energi
-ranking sektor barang baku
-
-📊 RANKING INDEKS
-Ketik:
-ranking indeks lq45
-ranking indeks idx30
-ranking indeks jii
-ranking indeks issi
-
-💡 Tips:
-- Gunakan huruf bebas (besar/kecil tidak masalah)
-- Bisa pakai spasi (contoh: barang baku)
-
-🚀 Contoh cepat:
-analisis saham bbca
-ranking sektor keuangan
-ranking indeks lq45
-";
-
-    kirimPesan($chat_id, $menu);
-}
-if ($text == "HI" || $text == "HALO") {
-    kirimPesan($chat_id, "Halo 👋\nKetik MENU untuk mulai.");
-}
+// ======================
+// FALLBACK
+// ======================
+kirimPesan($chat_id, "❌ Perintah tidak dikenali.\nKetik MENU untuk mulai.", [
+    "keyboard" => [["⬅️ MENU"]],
+    "resize_keyboard" => true
+]);

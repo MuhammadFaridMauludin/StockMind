@@ -1,15 +1,21 @@
 <?php
 require_once "C:/laragon/www/bot/config/config.php";
 
-function kirimPesan($chat_id, $text) {
+function kirimPesan($chat_id, $text, $keyboard = null) {
     global $BOT_TOKEN;
 
     $url = "https://api.telegram.org/bot$BOT_TOKEN/sendMessage";
 
     $data = [
         'chat_id' => $chat_id,
-        'text' => $text
+        'text' => $text,
+        'parse_mode' => 'Markdown'
     ];
+
+    // 🔥 Tambahan: support keyboard
+    if ($keyboard) {
+        $data['reply_markup'] = json_encode($keyboard);
+    }
 
     $context = stream_context_create([
         'http' => [
@@ -20,8 +26,10 @@ function kirimPesan($chat_id, $text) {
     ]);
 
     $result = file_get_contents($url, false, $context);
+
     if ($result === false) {
         error_log("Gagal mengirim pesan ke Telegram: chat_id $chat_id");
     }
+
     file_put_contents("C:/laragon/www/bot/storage/response.txt", $result);
 }

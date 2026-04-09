@@ -48,7 +48,7 @@ class DataService {
     }
 
     private function simpanKeDB($kode, $data) {
-
+        $this->pastikanSahamAda($kode);
         $stmt = $this->conn->prepare("
             INSERT INTO data_saham 
             (kode, harga, eps, per, roe, der, div_yield, rsi, ma20, ma50, support, volume_signal, updated_at)
@@ -96,4 +96,16 @@ class DataService {
         $hour = date('H');
         return ($hour >= 9 && $hour <= 16);
     }
+    private function pastikanSahamAda($kode) {
+    $stmt = $this->conn->prepare("SELECT kode FROM saham WHERE kode = ?");
+    $stmt->bind_param("s", $kode);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 0) {
+        $insert = $this->conn->prepare("INSERT INTO saham (kode) VALUES (?)");
+        $insert->bind_param("s", $kode);
+        $insert->execute();
+    }
+}
 }

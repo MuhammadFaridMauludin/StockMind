@@ -1,0 +1,14 @@
+[09-Apr-2026 07:02:31 UTC] PHP Warning:  file_get_contents(https://api.telegram.org/bot8681738383:AAFKUbp-tI-E69HCKpPL3eDiJA9JfWF7_0Y/sendMessage): Failed to open stream: HTTP request failed! HTTP/1.1 400 Bad Request
+ in C:\laragon\www\bot\services\TelegramService.php on line 28
+[09-Apr-2026 07:02:31 UTC] Gagal mengirim pesan ke Telegram: chat_id 
+[09-Apr-2026 07:02:36 UTC] PHP Warning:  file_get_contents(https://api.telegram.org/bot8681738383:AAFKUbp-tI-E69HCKpPL3eDiJA9JfWF7_0Y/sendMessage): Failed to open stream: HTTP request failed! HTTP/1.1 400 Bad Request
+ in C:\laragon\www\bot\services\TelegramService.php on line 28
+[09-Apr-2026 07:02:36 UTC] Gagal mengirim pesan ke Telegram: chat_id 
+[09-Apr-2026 07:02:57 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Cannot add or update a child row: a foreign key constraint fails (`stockmindd`.`data_saham`, CONSTRAINT `data_saham_ibfk_1` FOREIGN KEY (`kode`) REFERENCES `saham` (`kode`)) in C:\laragon\www\bot\services\Dataservice.php:87
+Stack trace:
+#0 C:\laragon\www\bot\services\Dataservice.php(87): mysqli_stmt->execute()
+#1 C:\laragon\www\bot\services\Dataservice.php(30): DataService->simpanKeDB('MINA', Array)
+#2 C:\laragon\www\bot\services\AnalysisService.php(203): DataService->getData('MINA')
+#3 C:\laragon\www\bot\api\webhook.php(71): AnalysisService->analisisSaham('MINA')
+#4 {main}
+  thrown in C:\laragon\www\bot\services\Dataservice.php on line 87
