@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle
 
+from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
@@ -11,21 +12,40 @@ from sklearn.metrics import accuracy_score, classification_report
 df = pd.read_csv("data/dataset.csv")
 
 # ======================
-# PILIH FITUR
+# BALANCING DATA 🔥
+# ======================
+df_majority = df[df.target == 0]
+df_minority = df[df.target == 1]
+
+df_minority_upsampled = resample(
+    df_minority,
+    replace=True,
+    n_samples=len(df_majority),
+    random_state=42
+)
+
+df = pd.concat([df_majority, df_minority_upsampled])
+
+# ======================
+# SHUFFLE (WAJIB setelah balancing)
+# ======================
+df = df.sample(frac=1, random_state=42)
+
+# ======================
+# FITUR
 # ======================
 features = [
     "rsi",
+    "rsi_change",
     "return_1d",
     "return_5d",
-    #"macd",
-    #"macd_hist",
+    "return_10d",
+    "return_20d",
     "dist_ma20",
-    #"dist_ma50",
-    #"dist_support",
-    #"dist_resistance",
+    "dist_ma50",
     "volume_ratio",
-    
-    #"return_20d"
+    "volume_spike",
+    "volatility"
 ]
 
 X = df[features]
@@ -35,15 +55,16 @@ y = df["target"]
 # SPLIT DATA
 # ======================
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, shuffle=False
+    X, y, test_size=0.2, random_state=42
 )
 
 # ======================
-# TRAIN MODEL
+# MODEL (UPGRADE 🔥)
 # ======================
 model = RandomForestClassifier(
-    n_estimators=100,
-    max_depth=5,
+    n_estimators=200,
+    max_depth=10,
+    class_weight='balanced',
     random_state=42
 )
 

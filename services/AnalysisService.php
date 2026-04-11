@@ -215,6 +215,7 @@ function generateNarasiAI($kode, $data) {
 
     return $narasi;
 }
+
 private function getMLPrediction($kode) {
 
     $cmd = "\"C:/Users/Muhammad Farid M/AppData/Local/Programs/Python/Python311/python.exe\" C:/laragon/www/bot/python/predict.py $kode 2>&1";
@@ -230,15 +231,30 @@ private function getMLPrediction($kode) {
 
     return $data;
 }
+private function hitungATR($harga, $support, $resistance) {
+
+    // fallback sederhana (karena belum ada OHLC full di PHP)
+    $range = abs($resistance - $support);
+
+    if ($range <= 0) {
+        return $harga * 0.03; // fallback 3%
+    }
+
+    return $range / 2;
+}
 private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $insight, $narasi, $support, $resistance, $volume_signal, $rsi) {
 
     if ($mode === 'trader') {
          $ml = $this->getMLPrediction($kode);
-    if ($ml) {
-    if ($ml['pred'] == 0 && $ml['confidence'] > 65) {
-        $dec['rekom'] = "WAIT / SELL ⚠️";
+   if ($ml) {
+
+    if ($ml['pred'] == 0) {
+        $dec['rekom'] = ($ml['confidence'] >= 65)
+            ? "SELL / AVOID ❌"
+            : "WAIT ⚠️";
     }
-   if ($ml['pred'] == 1) {
+
+    elseif ($ml['pred'] == 1) {
 
         if ($ml['confidence'] >= 80 && $tek['trend'] != "Downtrend ❌") {
             $dec['rekom'] = "STRONG BUY 🚀";
@@ -248,6 +264,9 @@ private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $in
             $dec['rekom'] = "BUY (EARLY REVERSAL) ⚠️";
         }
 
+        elseif ($ml['confidence'] >= 60) {
+            $dec['rekom'] = "BUY (SPECULATIVE) 🤔";
+        }
     }
 }
    if ($ml) {
@@ -259,12 +278,69 @@ private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $in
     } else {
         $confidenceLabel = "Lemah ⚠️";
     }
+}else{
+    $confidenceLabel = "-";
 }
     $mlText = "";
     if ($ml) {
         $arah = ($ml['pred'] == 1) ? "Naik 📈" : "Turun 📉";
         $mlText = "\n🔮 PREDIKSI ML\nArah: $arah\nConfidence: {$ml['confidence']}%";
     }
+   // ======================
+    // ATR + TARGET TRADING
+    // ======================
+   $targetText = "";
+
+if ($ml) {
+
+    // 🔻 ML TURUN → WARNING
+    if ($ml['pred'] == 0) {
+
+        $targetText = "
+⚠️ TIDAK DISARANKAN BUY
+
+📉 Skenario:
+- Potensi turun masih dominan
+- Hindari entry
+
+🎯 Strategi:
+- Tunggu di area support: Rp $support
+- Atau tunggu reversal signal
+";
+
+    }
+
+    // ⚠️ ML NAIK tapi confidence rendah
+    elseif ($ml['pred'] == 1 && $ml['confidence'] < 65) {
+
+        $targetText = "
+⚠️ SINYAL LEMAH
+
+- Confidence masih rendah ({$ml['confidence']}%)
+- Sebaiknya tunggu konfirmasi tambahan
+";
+
+    }
+
+    // 🚀 ML NAIK + CONFIDENT → TP/SL
+    elseif($ml['pred'] == 1 && $ml['confidence'] >= 65){
+
+        $atr = $this->hitungATR($harga, $support, $resistance);
+
+        $tp1 = round($harga + ($atr * 1));
+        $tp2 = round($harga + ($atr * 2));
+        $sl  = round($harga - ($atr * 1));
+
+        $targetText = "
+🎯 TARGET TRADING
+Entry: Rp $harga
+TP1  : Rp $tp1
+TP2  : Rp $tp2
+SL   : Rp $sl
+";
+    }
+}
+
         return "
 📊 ANALISIS SAHAM (TRADER): $kode
 
@@ -293,6 +369,7 @@ $insight
 
 $mlText
 $confidenceLabel
+$targetText
 ";
     }
 
@@ -391,7 +468,8 @@ function analisisSaham($kode, $mode = 'investor') {
     $support,
     $resistance,
     $volume_signal,
-    $rsi
+    $rsi,
+    $ml
 );
 }
 }

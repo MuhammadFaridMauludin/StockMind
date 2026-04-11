@@ -1,9 +1,0 @@
-[11-Apr-2026 12:53:12 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\laragon\www\bot\services\Dataservice.php:73
-Stack trace:
-#0 C:\laragon\www\bot\services\Dataservice.php(73): mysqli_stmt->bind_param('sdddddddddds', 'BBRI', 3390.0, 375.95, 9.02, 0.1746, 0, 0.1019, 41.67, 3439.0, 3664.6, 3220.0, 3750.0, 'high')
-#1 C:\laragon\www\bot\services\Dataservice.php(30): DataService->simpanKeDB('BBRI', Array)
-#2 C:\laragon\www\bot\services\AnalysisService.php(212): DataService->getData('BBRI')
-#3 C:\laragon\www\bot\api\webhook.php(71): AnalysisService->analisisSaham('BBRI')
-#4 {main}
-  thrown in C:\laragon\www\bot\services\Dataservice.php on line 73
-[11-Apr-2026 15:38:53 UTC] PHP Parse error:  Unclosed '{' on line 6 in C:\laragon\www\bot\services\AnalysisService.php on line 380
