@@ -41,7 +41,8 @@ class DataService {
         $data = $stmt->get_result()->fetch_assoc();
 
         if ($data) {
-            $data['price'] = $data['harga']; // mapping penting
+            $data['price'] = $data['harga'];
+            $data['resistance'] = $data['resistance'] ?? null;
         }
 
         return $data;
@@ -51,8 +52,8 @@ class DataService {
         $this->pastikanSahamAda($kode);
         $stmt = $this->conn->prepare("
             INSERT INTO data_saham 
-            (kode, harga, eps, per, roe, der, div_yield, rsi, ma20, ma50, support, volume_signal, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            (kode, harga, eps, per, roe, der, div_yield, rsi, ma20, ma50, support, resistance, volume_signal, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
             harga=VALUES(harga),
             eps=VALUES(eps),
@@ -64,12 +65,13 @@ class DataService {
             ma20=VALUES(ma20),
             ma50=VALUES(ma50),
             support=VALUES(support),
+            resistance=VALUES(resistance),
             volume_signal=VALUES(volume_signal),
             updated_at=NOW()
         ");
 
         $stmt->bind_param(
-            "sdddddddddds",
+            "sddddddddddds",
             $kode,
             $data['price'],
             $data['eps'],
@@ -81,6 +83,7 @@ class DataService {
             $data['ma20'],
             $data['ma50'],
             $data['support'],
+            $data['resistance'],
             $data['volume_signal']
         );
 

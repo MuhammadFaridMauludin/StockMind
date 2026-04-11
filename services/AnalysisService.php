@@ -36,6 +36,15 @@ function analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $vo
     } else {
         $summary = "Pergerakan masih normal";
     }
+    if ($resistance <= 0 || $support <= 0) {
+    $sr_text = "Data support/resistance tidak tersedia";
+    } elseif ($harga <= $support * 1.02) {
+        $sr_text = "Dekat support → potensi pantulan";
+    } elseif ($harga >= $resistance * 0.98) {
+        $sr_text = "Dekat resistance → rawan turun";
+    } else {
+        $sr_text = "Area netral";
+    }
 
     return compact("trend", "rsi_text", "sr_text", "vol_text", "summary");
 }
