@@ -163,11 +163,23 @@ function analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield) {
     );
 }
 
-function generateInsight($per, $roe, $rsi, $trend) {
-    if ($per < 10 && $roe > 0.15)              return "Valuasi murah + profitabilitas tinggi → menarik";
-    if ($trend == "Downtrend ❌" && $rsi < 30) return "Oversold di downtrend → potensi rebound";
-    if ($trend == "Uptrend kuat ✅" && $rsi > 60) return "Trend naik kuat → momentum bullish";
-    return "Kondisi relatif netral";
+function generateInsight($per, $roe, $rsi, $trend, $ml, $insight) {
+    $text = "";
+
+    if ($per < 10 && $roe > 0.15)
+        $text = "Valuasi murah + profitabilitas tinggi → menarik";
+    elseif ($trend == "Downtrend ❌" && $rsi < 30)
+        $text = "Oversold di downtrend → potensi rebound";
+    elseif ($trend == "Uptrend kuat ✅" && $rsi > 60)
+        $text = "Trend naik kuat → momentum bullish";
+    else
+        $text = "Kondisi relatif netral";
+
+    if ($ml && $ml['confidence'] > 60) {
+        $text .= "\n🤖 ML melihat potensi " . ($ml['pred'] ? "kenaikan" : "penurunan");
+    }
+
+    return $text;
 }
 
 function generateNarasiAI($kode, $data) {
@@ -203,9 +215,56 @@ function generateNarasiAI($kode, $data) {
 
     return $narasi;
 }
+private function getMLPrediction($kode) {
+
+    $cmd = "\"C:/Users/Muhammad Farid M/AppData/Local/Programs/Python/Python311/python.exe\" C:/laragon/www/bot/python/predict.py $kode 2>&1";
+    $output = shell_exec($cmd);
+
+    file_put_contents("C:/laragon/www/bot/storage/log2.txt", "ML RAW: " . $output . PHP_EOL, FILE_APPEND);
+
+    if (!$output) return null;
+
+    $data = json_decode($output, true);
+
+    if (!$data || isset($data['error'])) return null;
+
+    return $data;
+}
 private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $insight, $narasi, $support, $resistance, $volume_signal, $rsi) {
 
     if ($mode === 'trader') {
+         $ml = $this->getMLPrediction($kode);
+    if ($ml) {
+    if ($ml['pred'] == 0 && $ml['confidence'] > 65) {
+        $dec['rekom'] = "WAIT / SELL ⚠️";
+    }
+   if ($ml['pred'] == 1) {
+
+        if ($ml['confidence'] >= 80 && $tek['trend'] != "Downtrend ❌") {
+            $dec['rekom'] = "STRONG BUY 🚀";
+        }
+
+        elseif ($ml['confidence'] >= 65 && $tek['trend'] == "Downtrend ❌") {
+            $dec['rekom'] = "BUY (EARLY REVERSAL) ⚠️";
+        }
+
+    }
+}
+   if ($ml) {
+
+    if ($ml['confidence'] >= 80) {
+        $confidenceLabel = "Sangat Tinggi 🔥";
+    } elseif ($ml['confidence'] >= 65) {
+        $confidenceLabel = "Kuat 💪";
+    } else {
+        $confidenceLabel = "Lemah ⚠️";
+    }
+}
+    $mlText = "";
+    if ($ml) {
+        $arah = ($ml['pred'] == 1) ? "Naik 📈" : "Turun 📉";
+        $mlText = "\n🔮 PREDIKSI ML\nArah: $arah\nConfidence: {$ml['confidence']}%";
+    }
         return "
 📊 ANALISIS SAHAM (TRADER): $kode
 
@@ -231,6 +290,9 @@ Volume: $volume_signal
 
 🧠 INSIGHT
 $insight
+
+$mlText
+$confidenceLabel
 ";
     }
 
@@ -294,8 +356,10 @@ function analisisSaham($kode, $mode = 'investor') {
 
     $tek    = $this->analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $volume_signal);
     $fund   = $this->analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield);
-    $dec    = $scoring->hitungSAW($data); // ← fix: urutan benar, pakai ->
-    $insight = $this->generateInsight($per, $roe, $rsi, $tek['trend']); // ← fix: 4 parameter
+    $dec    = $scoring->hitungSAW($data); 
+    $ml = $this->getMLPrediction($kode);
+    $insight = "";
+    $insight = $this->generateInsight($per, $roe, $rsi, $tek['trend'], $ml, $insight); // ← fix: 4 parameter
     $narasi  = $this->generateNarasiAI($kode, [
         "trend"   => $tek['trend'],
         "rsi"     => $rsi,
