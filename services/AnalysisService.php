@@ -203,11 +203,73 @@ function generateNarasiAI($kode, $data) {
 
     return $narasi;
 }
+private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $insight, $narasi, $support, $resistance, $volume_signal, $rsi) {
+
+    if ($mode === 'trader') {
+        return "
+📊 ANALISIS SAHAM (TRADER): $kode
+
+💰 Harga: Rp $harga
+
+📉 TEKNIKAL
+RSI: " . round($rsi, 2) . "
+→ {$tek['rsi_text']}
+
+Trend: {$tek['trend']}
+
+Support: $support | Resistance: $resistance
+→ {$tek['sr_text']}
+
+Volume: $volume_signal
+→ {$tek['vol_text']}
+
+📌 Kesimpulan
+→ {$tek['summary']}
+
+🎯 SCORE: {$dec['score']}
+📌 REKOMENDASI: {$dec['rekom']}
+
+🧠 INSIGHT
+$insight
+";
+    }
+
+    // default investor
+    return "
+📊 ANALISIS SAHAM (INVESTOR): $kode
+
+💰 Harga: Rp $harga
+
+📊 FUNDAMENTAL
+EPS: {$fund['eps_ket']}
+
+PER: {$fund['per_status']}
+→ {$fund['per_ket']}
+
+ROE: {$fund['roe_status']}
+→ {$fund['roe_ket']}
+
+DIVIDEN: {$fund['div_status']}
+→ {$fund['div_ket']}
+
+💰 Harga Wajar
+Rp {$dec['hargawajar']} ({$dec['valuasi']})
+
+🎯 SCORE: {$dec['score']}
+📌 REKOMENDASI: {$dec['rekom']}
+
+🧠 INSIGHT
+$insight
+
+🗣️ NARASI
+$narasi
+";
+}
 
 // =====================
 // MAIN
 // =====================
-function analisisSaham($kode) {
+function analisisSaham($kode, $mode = 'investor') {
     $dataService = new DataService();
     $data = $dataService->getData($kode);
 
@@ -253,57 +315,19 @@ function analisisSaham($kode) {
         ? "\n⚠️ Risiko: " . implode(", ", $dec['notes'])
         : "";
 
-    return "
-📊 ANALISIS SAHAM: $kode
-
-💰 Harga Sekarang: Rp $harga
-
-📊 FUNDAMENTAL
-EPS: " . round($eps, 2) . "
-→ {$fund['eps_ket']}
-
-PER: " . round($per, 2) . " ({$fund['per_status']})
-→ {$fund['per_ket']}
-
-PBV: " . round($pbv, 2) . " ({$fund['pbv_status']})
-→ {$fund['pbv_ket']}
-
-ROE: " . round($fund['roe_percent'], 2) . "% ({$fund['roe_status']})
-→ {$fund['roe_ket']}
-
-DER: $der_tampil ({$fund['der_status']})
-→ {$fund['der_ket']}
-
-DIV YIELD: " . round($fund['div_pct'], 2) . "% ({$fund['div_status']})
-→ {$fund['div_ket']}
-
-💰 Harga Wajar
-Rp {$dec['hargawajar']} ({$dec['valuasi']})
-
-📉 TEKNIKAL
-RSI: " . round($rsi, 2) . "
-→ {$tek['rsi_text']}
-
-Trend: {$tek['trend']}
-
-Support: $support | Resistance: $resistance
-→ {$tek['sr_text']}
-
-Volume: $volume_signal
-→ {$tek['vol_text']}
-
-📌 Kesimpulan Teknikal
-→ {$tek['summary']}
-
-🎯 SCORE (SAW): {$dec['score']}/100
-📌 REKOMENDASI: {$dec['rekom']}
-$risk_note
-
-🧠 INSIGHT
-$insight
-
-🗣️ NARASI
-$narasi
-";
+    return $this->formatOutputByMode(
+    $mode,
+    $kode,
+    $harga,
+    $fund,
+    $tek,
+    $dec,
+    $insight,
+    $narasi,
+    $support,
+    $resistance,
+    $volume_signal,
+    $rsi
+);
 }
 }

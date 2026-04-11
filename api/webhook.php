@@ -7,6 +7,7 @@ require_once "C:/laragon/www/bot/config/config.php";
 require_once "C:/laragon/www/bot/services/StockService.php";
 require_once "C:/laragon/www/bot/services/AnalysisService.php";
 require_once "C:/laragon/www/bot/services/TelegramService.php";
+require_once "C:/laragon/www/bot/services/ScoringService.php";
 
 $update = json_decode(file_get_contents("php://input"), true);
 
@@ -56,7 +57,7 @@ if ($text == "MENU" || $text == "HELP" || $text == "/START") {
 // ANALISIS SAHAM
 // ======================
 if ($text == "ANALISIS SAHAM") {
-    kirimPesan($chat_id, "Ketik:\nanalisis saham bbri", [
+    kirimPesan($chat_id, "Ketik:\nanalisis saham bbri\nuntuk trader:\nanlisis saham bbri trader", [
         "keyboard" => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
@@ -65,11 +66,24 @@ if ($text == "ANALISIS SAHAM") {
 
 if (strpos($text, "ANALISIS SAHAM") !== false) {
 
-    $kode = trim(str_replace("ANALISIS SAHAM", "", $text));
+    $input = explode(" ", $text);
+
+    // contoh:
+    // ANALISIS SAHAM BBRI TRADER
+
+    $kode = $input[2] ?? null;
+    $mode = strtolower($input[3] ?? 'investor');
 
     $analysis = new AnalysisService();
-    $hasil = $analysis->analisisSaham($kode);
+    $hasil = $analysis->analisisSaham($kode, $mode);
+    if (!$kode) {
+        kirimPesan($chat_id, "❌ Format salah.\nContoh:\nanalisis saham bbri trader");
+        return;
+    }
 
+    if (!in_array($mode, ['investor', 'trader'])) {
+        $mode = 'investor';
+    }
     kirimPesan($chat_id, $hasil, [
         "keyboard" => [["⬅️ MENU"]],
         "resize_keyboard" => true
