@@ -2,23 +2,23 @@ import yfinance as yf
 import pandas as pd
 
 kode_list = [
-    "BBRI.JK", "BBCA.JK", "BMRI.JK", "TLKM.JK", "ASII.JK",
-    "ADRO.JK", "UNVR.JK", "ICBP.JK", "ANTM.JK", "INDF.JK",
-    "BYAN.JK", "GOTO.JK", "BREN.JK", "AMMN.JK", "MDKA.JK",
-    "SMGR.JK", "GGRM.JK", "HMSP.JK", "KLBF.JK", "SIDO.JK"
-]
+    "ADRO","PTBA","BYAN","ITMG","INDY",
+    "MEDC","PGAS","HRUM","MBAP","DOID",
+    "BUMI","DEWA"
+];
 
 all_data = []
 
 for kode in kode_list:
 
-    print("Ambil:", kode)
+    kode_yf = kode + ".JK" 
+    print("Ambil:", kode_yf)
 
-    stock = yf.Ticker(kode)
+    stock = yf.Ticker(kode_yf)
     hist = stock.history(period="2y")
 
     if hist.empty:
-        print("❌ Skip:", kode)
+        print("❌ Skip:", kode_yf)
         continue
 
     # ======================
