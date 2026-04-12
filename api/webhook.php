@@ -13,24 +13,51 @@ $update = json_decode(file_get_contents("php://input"), true);
 
 if (!$update) exit("No data");
 
-// ✅ Balas Telegram dulu agar tidak timeout & tidak retry
+// ======================
+// ✅ RESPONSE 200 DULU
+// ======================
 ob_start();
 header("HTTP/1.1 200 OK");
 header("Content-Type: application/json");
 header("Connection: close");
-echo json_encode(["ok" => true]); // ✅ kasih response 200 ke Telegram
+echo json_encode(["ok" => true]);
 $size = ob_get_length();
 header("Content-Length: $size");
 ob_end_flush();
 flush();
 
-// ✅ Lanjut proses di background setelah Telegram puas
+// ======================
+// ✅ DEDUPLICATION (1 FILE)
+// ======================
+$update_id      = $update["update_id"] ?? null;
+$processed_file = "C:/laragon/www/bot/storage/processed_updates.json";
+
+if ($update_id) {
+    $processed = file_exists($processed_file)
+        ? json_decode(file_get_contents($processed_file), true)
+        : [];
+
+    if (in_array($update_id, $processed)) {
+        exit("duplicate");
+    }
+
+    $processed[] = $update_id;
+
+    // Batasi hanya 100 update_id terakhir
+    if (count($processed) > 100) {
+        $processed = array_slice($processed, -100);
+    }
+
+    file_put_contents($processed_file, json_encode($processed));
+}
+
+// ======================
+// AMBIL DATA
+// ======================
 $chat_id = $update["message"]["chat"]["id"] ?? null;
 $text    = strtoupper(trim($update["message"]["text"] ?? ""));
 
 file_put_contents("C:/laragon/www/bot/storage/log2.txt", "TEXT: $text" . PHP_EOL, FILE_APPEND);
-
-// ... sisa kode webhook seperti biasa
 
 // ======================
 // MENU UTAMA
@@ -39,14 +66,13 @@ function menuUtama($chat_id) {
     $keyboard = [
         "keyboard" => [
             ["Analisis Saham", "Ranking Sektor"],
-            ["Ranking Indeks", "BEST TRADE"] // ✅ rapikan jadi 2 kolom
+            ["Ranking Indeks", "BEST TRADE"]
         ],
         "resize_keyboard" => true
     ];
 
     kirimPesan($chat_id, "🤖 STOCKMIND BOT\nPilih menu:", $keyboard);
 }
-
 
 // ======================
 // BACK BUTTON
@@ -56,15 +82,13 @@ if ($text == "⬅️ MENU") {
     return;
 }
 
-
 // ======================
 // START / HELP / MENU
 // ======================
-if (in_array($text, ["MENU", "HELP", "/START"])) { // ✅ lebih ringkas
+if (in_array($text, ["MENU", "HELP", "/START"])) {
     menuUtama($chat_id);
     return;
 }
-
 
 // ======================
 // ANALISIS SAHAM (tombol menu)
@@ -82,18 +106,15 @@ if ($text == "ANALISIS SAHAM") {
     return;
 }
 
-
 // ======================
 // ANALISIS SAHAM (input kode)
 // ======================
-if (strpos($text, "ANALISIS SAHAM") === 0) { // ✅ pastikan diawali "ANALISIS SAHAM", bukan hanya mengandung
+if (strpos($text, "ANALISIS SAHAM") === 0) {
 
     $input = explode(" ", $text);
+    $kode  = $input[2] ?? null;
+    $mode  = strtolower($input[3] ?? 'investor');
 
-    $kode = $input[2] ?? null;
-    $mode = strtolower($input[3] ?? 'investor');
-
-    // ✅ Validasi kode dulu SEBELUM memanggil service
     if (!$kode) {
         kirimPesan($chat_id,
             "❌ Format salah.\n\nContoh:\nanalisis saham BBRI\nanalisis saham BBRI trader",
@@ -110,7 +131,7 @@ if (strpos($text, "ANALISIS SAHAM") === 0) { // ✅ pastikan diawali "ANALISIS S
     }
 
     $analysis = new AnalysisService();
-    $hasil    = $analysis->analisisSaham($kode, $mode); // ✅ baru dipanggil setelah validasi
+    $hasil    = $analysis->analisisSaham($kode, $mode);
 
     kirimPesan($chat_id, $hasil, [
         "keyboard"        => [["⬅️ MENU"]],
@@ -119,18 +140,17 @@ if (strpos($text, "ANALISIS SAHAM") === 0) { // ✅ pastikan diawali "ANALISIS S
     return;
 }
 
-
 // ======================
 // RANKING SEKTOR (tombol menu)
 // ======================
 if ($text == "RANKING SEKTOR") {
     $keyboard = [
         "keyboard" => [
-            ["KEUANGAN",         "ENERGI"],
-            ["BARANG BAKU",      "INDUSTRI"],
-            ["INFRASTRUKTUR",    "KESEHATAN"],
-            ["TEKNOLOGI",        "PROPERTI & REAL ESTATE"],
-            ["KONSUMEN PRIMER",  "KONSUMEN NON-PRIMER"],
+            ["KEUANGAN",        "ENERGI"],
+            ["BARANG BAKU",     "INDUSTRI"],
+            ["INFRASTRUKTUR",   "KESEHATAN"],
+            ["TEKNOLOGI",       "PROPERTI & REAL ESTATE"],
+            ["KONSUMEN PRIMER", "KONSUMEN NON-PRIMER"],
             ["TRANSPORTASI & LOGISTIK"],
             ["⬅️ MENU"]
         ],
@@ -141,22 +161,14 @@ if ($text == "RANKING SEKTOR") {
     return;
 }
 
-
 // ======================
 // HANDLE KLIK SEKTOR
 // ======================
 $daftarSektor = [
-    "KEUANGAN",
-    "ENERGI",
-    "BARANG BAKU",
-    "INDUSTRI",
-    "INFRASTRUKTUR",
-    "KESEHATAN",
-    "TEKNOLOGI",
-    "KONSUMEN PRIMER",
-    "KONSUMEN NON-PRIMER",
-    "PROPERTI & REAL ESTATE",
-    "TRANSPORTASI & LOGISTIK"
+    "KEUANGAN", "ENERGI", "BARANG BAKU", "INDUSTRI",
+    "INFRASTRUKTUR", "KESEHATAN", "TEKNOLOGI",
+    "KONSUMEN PRIMER", "KONSUMEN NON-PRIMER",
+    "PROPERTI & REAL ESTATE", "TRANSPORTASI & LOGISTIK"
 ];
 
 if (in_array($text, $daftarSektor)) {
@@ -172,7 +184,6 @@ if (in_array($text, $daftarSektor)) {
     ]);
     return;
 }
-
 
 // ======================
 // RANKING INDEKS (tombol menu)
@@ -192,7 +203,6 @@ if ($text == "RANKING INDEKS") {
     return;
 }
 
-
 // ======================
 // HANDLE KLIK INDEKS
 // ======================
@@ -207,7 +217,7 @@ if (in_array($text, $daftarIndeks)) {
 
     $scoring  = new ScoringService();
     $ranking  = $scoring->rankingIndeks($namaIndeks);
-    $response = $scoring->formatRanking("INDEKS " . strtoupper($namaIndeks), $ranking); // ✅ uppercase label
+    $response = $scoring->formatRanking("INDEKS " . strtoupper($namaIndeks), $ranking);
 
     kirimPesan($chat_id, $response, [
         "keyboard"        => [["⬅️ MENU"]],
@@ -216,14 +226,11 @@ if (in_array($text, $daftarIndeks)) {
     return;
 }
 
-
 // ======================
 // BEST TRADE
 // ======================
 if ($text == "BEST TRADE") {
-    $analysis = new AnalysisService();
-
-     kirimPesan($chat_id, "⏳ Sedang menganalisis saham terbaik, mohon tunggu...");
+    kirimPesan($chat_id, "⏳ Sedang menganalisis saham terbaik, mohon tunggu...");
 
     $analysis = new AnalysisService();
     $data     = $analysis->getBestTrade();
@@ -233,10 +240,8 @@ if ($text == "BEST TRADE") {
         "keyboard"        => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
-
     return;
 }
-
 
 // ======================
 // FALLBACK

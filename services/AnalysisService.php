@@ -229,10 +229,28 @@ class AnalysisService {
     }
 
     private function hitungATR($harga, $support, $resistance) {
-        $range = abs($resistance - $support);
-        return ($range <= 0) ? $harga * 0.03 : $range / 2;
+
+    $range = abs($resistance - $support);
+
+    // ATR dasar (15% dari range)
+    $atr = $range * 0.15;
+
+    // BATAS MAKSIMAL (5% harga)
+    $maxAtr = $harga * 0.05;
+
+    if ($atr > $maxAtr) {
+        $atr = $maxAtr;
     }
 
+    // BATAS MINIMAL (1% harga)
+    $minAtr = $harga * 0.01;
+
+    if ($atr < $minAtr) {
+        $atr = $minAtr;
+    }
+
+    return $atr;
+}
 
     private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $insight, $narasi, $support, $resistance, $volume_signal, $rsi, $ml) {
 
@@ -365,8 +383,15 @@ $narasi
 public function getBestTrade() {
 
     $listSaham = [
-        "BBRI", "BBCA", "BMRI", "TLKM", "ASII",
-        "ADRO", "BYAN", "UNVR", "ICBP", "GOTO"
+        "ABMM","ADMR","ADRO","AIMS","AKRA","ALII","APEX","ARII","ARTI","ATLA",
+    "BBRM","BESS","BIPI","BOSS","BSML","BSSR","BULL","BUMI","BYAN","CANI",
+    "CBRE","CGAS","CNKO","COAL","CUAN","DEWA","DOID","DSSA","DWGL","ELSA",
+    "ENRG","FIRE","GEMS","GTBO","GTSI","HILL","HITS","HRUM","HUMI","IATA",
+    "INDY","INPS","ITMA","ITMG","JSKY","KKGI","KOPI","LEAD","MAHA","MBAP",
+    "MBSS","MCOL","MEDC","MKAP","MTFN","MYOH","PGAS","PKPK","PSSI","PTBA",
+    "PTIS","PTRO","RAJA","RGAS","RIGS","RMKE","RMKO","RUIS","SEMA","SGER",
+    "SHIP","SICO","SMMT","SMRU","SOCI","SUGI","SUNI","SURE","TAMU","TCPI",
+    "TEBE","TOBA","TPMA","TRAM","UNIQ","WINS","WOWS","AADI"
     ];
     #$data = $this->dataService->getData($kode);
     $results = [];
@@ -384,9 +409,20 @@ public function getBestTrade() {
         $ml  = $this->getMLPrediction($kode);
 
         if (!$ml) continue;
-        if ($ml['confidence'] < 60) continue; // ✅ skip confidence rendah
+        if ($ml['confidence'] < 60) continue; 
 
-        $atr = $this->hitungATR($harga, $data['support'] ?? 0, $data['resistance'] ?? 0);
+        $support = $data['support'] ?? 0;
+        $resistance = $data['resistance'] ?? 0;
+
+    if ($resistance <= $harga) {
+        $resistance = $harga * 1.05;
+    }
+
+    if ($support <= 0) {
+        $support = $harga * 0.95;
+    }
+
+        $atr = $this->hitungATR($harga, $support, $resistance);
 
         $results[] = [
             "kode"       => $kode,
@@ -456,7 +492,7 @@ public function formatBestTrade($data) {
         }
 
         // TARGET
-        if ($d['pred'] == 1 && $d['confidence'] >= 65) {
+        if ($d['pred'] == 1 && $d['confidence'] >= 60) {
 
             $target = "
 Entry: Rp {$d['harga']}
