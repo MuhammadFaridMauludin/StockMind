@@ -1,0 +1,9 @@
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp1" in C:\laragon\www\bot\services\AnalysisService.php on line 470
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp2" in C:\laragon\www\bot\services\AnalysisService.php on line 471
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "sl" in C:\laragon\www\bot\services\AnalysisService.php on line 472
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp1" in C:\laragon\www\bot\services\AnalysisService.php on line 470
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp2" in C:\laragon\www\bot\services\AnalysisService.php on line 471
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "sl" in C:\laragon\www\bot\services\AnalysisService.php on line 472
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp1" in C:\laragon\www\bot\services\AnalysisService.php on line 470
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "tp2" in C:\laragon\www\bot\services\AnalysisService.php on line 471
+[11-Apr-2026 18:25:44 UTC] PHP Warning:  Undefined array key "sl" in C:\laragon\www\bot\services\AnalysisService.php on line 472

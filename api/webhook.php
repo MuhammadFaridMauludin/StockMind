@@ -14,7 +14,7 @@ $update = json_decode(file_get_contents("php://input"), true);
 if (!$update) exit("No data");
 
 $chat_id = $update["message"]["chat"]["id"] ?? null;
-$text = strtoupper(trim($update["message"]["text"] ?? ""));
+$text    = strtoupper(trim($update["message"]["text"] ?? ""));
 
 file_put_contents("C:/laragon/www/bot/storage/log2.txt", "TEXT: $text" . PHP_EOL, FILE_APPEND);
 
@@ -26,7 +26,7 @@ function menuUtama($chat_id) {
     $keyboard = [
         "keyboard" => [
             ["Analisis Saham", "Ranking Sektor"],
-            ["Ranking Indeks"]
+            ["Ranking Indeks", "BEST TRADE"] // ✅ rapikan jadi 2 kolom
         ],
         "resize_keyboard" => true
     ];
@@ -47,45 +47,60 @@ if ($text == "⬅️ MENU") {
 // ======================
 // START / HELP / MENU
 // ======================
-if ($text == "MENU" || $text == "HELP" || $text == "/START") {
+if (in_array($text, ["MENU", "HELP", "/START"])) { // ✅ lebih ringkas
     menuUtama($chat_id);
     return;
 }
 
 
 // ======================
-// ANALISIS SAHAM
+// ANALISIS SAHAM (tombol menu)
 // ======================
 if ($text == "ANALISIS SAHAM") {
-    kirimPesan($chat_id, "Ketik:\nanalisis saham bbri\nuntuk trader:\nanlisis saham bbri trader", [
-        "keyboard" => [["⬅️ MENU"]],
-        "resize_keyboard" => true
-    ]);
+    kirimPesan($chat_id,
+        "Ketik perintah berikut:\n\n" .
+        "📌 Mode Investor:\nanalisis saham BBRI\n\n" .
+        "📌 Mode Trader:\nanalisis saham BBRI trader",
+        [
+            "keyboard"        => [["⬅️ MENU"]],
+            "resize_keyboard" => true
+        ]
+    );
     return;
 }
 
-if (strpos($text, "ANALISIS SAHAM") !== false) {
+
+// ======================
+// ANALISIS SAHAM (input kode)
+// ======================
+if (strpos($text, "ANALISIS SAHAM") === 0) { // ✅ pastikan diawali "ANALISIS SAHAM", bukan hanya mengandung
 
     $input = explode(" ", $text);
-
-    // contoh:
-    // ANALISIS SAHAM BBRI TRADER
 
     $kode = $input[2] ?? null;
     $mode = strtolower($input[3] ?? 'investor');
 
-    $analysis = new AnalysisService();
-    $hasil = $analysis->analisisSaham($kode, $mode);
+    // ✅ Validasi kode dulu SEBELUM memanggil service
     if (!$kode) {
-        kirimPesan($chat_id, "❌ Format salah.\nContoh:\nanalisis saham bbri trader");
+        kirimPesan($chat_id,
+            "❌ Format salah.\n\nContoh:\nanalisis saham BBRI\nanalisis saham BBRI trader",
+            [
+                "keyboard"        => [["⬅️ MENU"]],
+                "resize_keyboard" => true
+            ]
+        );
         return;
     }
 
     if (!in_array($mode, ['investor', 'trader'])) {
         $mode = 'investor';
     }
+
+    $analysis = new AnalysisService();
+    $hasil    = $analysis->analisisSaham($kode, $mode); // ✅ baru dipanggil setelah validasi
+
     kirimPesan($chat_id, $hasil, [
-        "keyboard" => [["⬅️ MENU"]],
+        "keyboard"        => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
     return;
@@ -93,23 +108,21 @@ if (strpos($text, "ANALISIS SAHAM") !== false) {
 
 
 // ======================
-// RANKING SEKTOR (TOMBOL)
+// RANKING SEKTOR (tombol menu)
 // ======================
 if ($text == "RANKING SEKTOR") {
-
     $keyboard = [
-    "keyboard" => [
-        ["KEUANGAN", "ENERGI"],
-        ["BARANG BAKU", "INDUSTRI"],
-        ["INFRASTRUKTUR", "KESEHATAN"],
-        ["TEKNOLOGI"],
-        ["KONSUMEN PRIMER", "KONSUMEN NON-PRIMER"],
-        ["PROPERTI & REAL ESTATE"],
-        ["TRANSPORTASI & LOGISTIK"],
-        ["⬅️ MENU"]
-    ],
-    "resize_keyboard" => true
-];
+        "keyboard" => [
+            ["KEUANGAN",         "ENERGI"],
+            ["BARANG BAKU",      "INDUSTRI"],
+            ["INFRASTRUKTUR",    "KESEHATAN"],
+            ["TEKNOLOGI",        "PROPERTI & REAL ESTATE"],
+            ["KONSUMEN PRIMER",  "KONSUMEN NON-PRIMER"],
+            ["TRANSPORTASI & LOGISTIK"],
+            ["⬅️ MENU"]
+        ],
+        "resize_keyboard" => true
+    ];
 
     kirimPesan($chat_id, "📊 Pilih sektor:", $keyboard);
     return;
@@ -134,15 +147,14 @@ $daftarSektor = [
 ];
 
 if (in_array($text, $daftarSektor)) {
-
     $namaSektor = strtolower($text);
 
-    $scoring = new ScoringService();
-    $ranking = $scoring->rankingSektor($namaSektor);
+    $scoring  = new ScoringService();
+    $ranking  = $scoring->rankingSektor($namaSektor);
     $response = $scoring->formatRanking($namaSektor, $ranking);
 
     kirimPesan($chat_id, $response, [
-        "keyboard" => [["⬅️ MENU"]],
+        "keyboard"        => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
     return;
@@ -150,15 +162,14 @@ if (in_array($text, $daftarSektor)) {
 
 
 // ======================
-// RANKING INDEKS (TOMBOL)
+// RANKING INDEKS (tombol menu)
 // ======================
 if ($text == "RANKING INDEKS") {
-
     $keyboard = [
         "keyboard" => [
-            ["LQ45", "IDX30"],
+            ["LQ45",  "IDX30"],
             ["IDX80", "JII"],
-            ["ISSI", "ESG"],
+            ["ISSI",  "ESG"],
             ["⬅️ MENU"]
         ],
         "resize_keyboard" => true
@@ -175,19 +186,35 @@ if ($text == "RANKING INDEKS") {
 $daftarIndeks = ["LQ45", "IDX30", "IDX80", "JII", "ISSI", "ESG"];
 
 if (in_array($text, $daftarIndeks)) {
-
     $namaIndeks = strtolower($text);
 
     if ($namaIndeks == "esg") {
         $namaIndeks = "esg leaders";
     }
 
-    $scoring = new ScoringService();
-    $ranking = $scoring->rankingIndeks($namaIndeks);
-    $response = $scoring->formatRanking("INDEKS " . $namaIndeks, $ranking);
+    $scoring  = new ScoringService();
+    $ranking  = $scoring->rankingIndeks($namaIndeks);
+    $response = $scoring->formatRanking("INDEKS " . strtoupper($namaIndeks), $ranking); // ✅ uppercase label
 
     kirimPesan($chat_id, $response, [
-        "keyboard" => [["⬅️ MENU"]],
+        "keyboard"        => [["⬅️ MENU"]],
+        "resize_keyboard" => true
+    ]);
+    return;
+}
+
+
+// ======================
+// BEST TRADE
+// ======================
+if ($text == "BEST TRADE") {
+    $analysis = new AnalysisService();
+
+    $data     = $analysis->getBestTrade();
+    $response = $analysis->formatBestTrade($data);
+
+    kirimPesan($chat_id, $response, [
+        "keyboard"        => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
     return;
@@ -198,6 +225,6 @@ if (in_array($text, $daftarIndeks)) {
 // FALLBACK
 // ======================
 kirimPesan($chat_id, "❌ Perintah tidak dikenali.\nKetik MENU untuk mulai.", [
-    "keyboard" => [["⬅️ MENU"]],
+    "keyboard"        => [["⬅️ MENU"]],
     "resize_keyboard" => true
 ]);
