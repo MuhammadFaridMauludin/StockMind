@@ -13,11 +13,24 @@ $update = json_decode(file_get_contents("php://input"), true);
 
 if (!$update) exit("No data");
 
+// ✅ Balas Telegram dulu agar tidak timeout & tidak retry
+ob_start();
+header("HTTP/1.1 200 OK");
+header("Content-Type: application/json");
+header("Connection: close");
+echo json_encode(["ok" => true]); // ✅ kasih response 200 ke Telegram
+$size = ob_get_length();
+header("Content-Length: $size");
+ob_end_flush();
+flush();
+
+// ✅ Lanjut proses di background setelah Telegram puas
 $chat_id = $update["message"]["chat"]["id"] ?? null;
 $text    = strtoupper(trim($update["message"]["text"] ?? ""));
 
 file_put_contents("C:/laragon/www/bot/storage/log2.txt", "TEXT: $text" . PHP_EOL, FILE_APPEND);
 
+// ... sisa kode webhook seperti biasa
 
 // ======================
 // MENU UTAMA
@@ -210,6 +223,9 @@ if (in_array($text, $daftarIndeks)) {
 if ($text == "BEST TRADE") {
     $analysis = new AnalysisService();
 
+     kirimPesan($chat_id, "⏳ Sedang menganalisis saham terbaik, mohon tunggu...");
+
+    $analysis = new AnalysisService();
     $data     = $analysis->getBestTrade();
     $response = $analysis->formatBestTrade($data);
 
@@ -217,6 +233,7 @@ if ($text == "BEST TRADE") {
         "keyboard"        => [["⬅️ MENU"]],
         "resize_keyboard" => true
     ]);
+
     return;
 }
 

@@ -43,9 +43,12 @@ features = [
     "return_20d",
     "dist_ma20",
     "dist_ma50",
-    "volume_ratio",
     "volume_spike",
-    "volatility"
+    "volatility",
+    "body_ratio",
+    "upper_ratio",
+    "lower_ratio",
+    "atr"
 ]
 
 X = df[features]

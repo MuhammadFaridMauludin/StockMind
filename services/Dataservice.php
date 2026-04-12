@@ -99,6 +99,7 @@ class DataService {
         $hour = date('H');
         return ($hour >= 9 && $hour <= 16);
     }
+    
     private function pastikanSahamAda($kode) {
     $stmt = $this->conn->prepare("SELECT kode FROM saham WHERE kode = ?");
     $stmt->bind_param("s", $kode);
@@ -111,4 +112,17 @@ class DataService {
         $insert->execute();
     }
 }
+/*
+public function getAllSaham() {
+
+    $query = $this->conn->query("SELECT kode FROM saham");
+
+    $list = [];
+
+    while ($row = $query->fetch_assoc()) {
+        $list[] = $row['kode'];
+    }
+
+    return $list;
+}*/
 }

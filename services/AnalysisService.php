@@ -5,7 +5,7 @@ require_once __DIR__ . "/DataService.php";
 
 class AnalysisService {
 
-    private DataService $dataService; // ✅ Fix bug #2
+    private DataService $dataService; 
 
     public function __construct() {
         $this->dataService = new DataService();
@@ -233,12 +233,10 @@ class AnalysisService {
         return ($range <= 0) ? $harga * 0.03 : $range / 2;
     }
 
-    // ✅ Fix bug #1: tambah parameter $ml
+
     private function formatOutputByMode($mode, $kode, $harga, $fund, $tek, $dec, $insight, $narasi, $support, $resistance, $volume_signal, $rsi, $ml) {
 
         if ($mode === 'trader') {
-
-            // ✅ Tidak perlu fetch ulang, gunakan $ml yang sudah di-pass
             if ($ml) {
                 if ($ml['pred'] == 0) {
                     $dec['rekom'] = ($ml['confidence'] >= 65) ? "SELL / AVOID ❌" : "WAIT ⚠️";
@@ -364,66 +362,53 @@ $narasi
 ";
     }
 
-    public function getBestTrade() {
-        $listSaham = ["BBRI", "BBCA", "BMRI", "TLKM", "ASII", "ADRO"];
-        $results   = [];
-        $scoring   = new ScoringService(); // ✅ Fix bug #3
+public function getBestTrade() {
 
-        foreach ($listSaham as $kode) {
-            $data = $this->dataService->getData($kode); // ✅ Fix bug #2
-            if (!$data) continue;
+    $listSaham = [
+        "BBRI", "BBCA", "BMRI", "TLKM", "ASII",
+        "ADRO", "BYAN", "UNVR", "ICBP", "GOTO"
+    ];
+    #$data = $this->dataService->getData($kode);
+    $results = [];
+    $scoring = new ScoringService();
 
-            $harga = $data['price'];
+    foreach ($listSaham as $kode) {
 
-            // ✅ Fix bug #4: pass parameter dengan benar
-            $fund = $this->analisisFundamental(
-                $data['per']    ?? 0,
-                $data['pbv']    ?? 0,
-                $data['roe']    ?? 0,
-                $data['eps']    ?? 0,
-                $data['der']    ?? 0,
-                $data['div_yield'] ?? 0
-            );
+        $data = $this->dataService->getData($kode);
+        if (!$data) continue;
 
-            $tek = $this->analisisTeknikal(
-                $harga,
-                $data['rsi']          ?? 0,
-                $data['ma20']         ?? 0,
-                $data['ma50']         ?? 0,
-                $data['support']      ?? 0,
-                $data['resistance']   ?? 0,
-                $data['volume_signal'] ?? 'low'
-            );
+        $harga = $data['price'] ?? 0;
+        if ($harga <= 0) continue;
 
-            $dec = $scoring->hitungSAW($data); // ✅ Fix bug #3
-            $ml  = $this->getMLPrediction($kode);
+        $dec = $scoring->hitungSAW($data);
+        $ml  = $this->getMLPrediction($kode);
 
-            if (!$ml) continue;
-            $atr = $this->hitungATR($harga, $data['support'], $data['resistance']);
+        if (!$ml) continue;
+        if ($ml['confidence'] < 60) continue; // ✅ skip confidence rendah
 
-$tp1 = round($harga + $atr);
-$tp2 = round($harga + ($atr * 2));
-$sl  = round($harga - $atr);
-            $results[] = [
-                "kode"       => $kode,
-                "harga"      => $harga,
-                "confidence" => $ml['confidence'],
-                "score"      => $dec['score'],
-                "pred" => $ml['pred'],
-                "support" => $data['support'],
-                "resistance" => $data['resistance'],
-                "tp1" => $tp1,
-                "tp2" => $tp2,
-                "sl" => $sl
-            ];
-        }
+        $atr = $this->hitungATR($harga, $data['support'] ?? 0, $data['resistance'] ?? 0);
 
-        usort($results, function($a, $b){
-            return($b['confidence'] + $b['score']) <=> ($a['confidence'] + $a['score']);
+        $results[] = [
+            "kode"       => $kode,
+            "harga"      => $harga,
+            "pred"       => $ml['pred'],
+            "confidence" => $ml['confidence'],
+            "score"      => $dec['score'],
+            "support"    => $data['support']    ?? 0,
+            "resistance" => $data['resistance'] ?? 0,
+            "tp1"        => round($harga + $atr),
+            "tp2"        => round($harga + ($atr * 2)),
+            "sl"         => round($harga - $atr),
+        ];
+    }
+
+    usort($results, function ($a, $b) {
+        if ($a['pred'] != $b['pred']) return $b['pred'] <=> $a['pred'];
+        return ($b['confidence'] + $b['score']) <=> ($a['confidence'] + $a['score']);
     });
 
-        return array_slice($results, 0, 3);
-    }
+    return array_slice($results, 0, 3);
+}
 
 public function formatBestTrade($data) {
 
