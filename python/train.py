@@ -1,10 +1,9 @@
 import pandas as pd
-import pickle
+import joblib
 
-from sklearn.utils import resample
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
+import numpy as np
 
 # ======================
 # LOAD DATA
@@ -12,62 +11,32 @@ from sklearn.metrics import accuracy_score, classification_report
 df = pd.read_csv("data/dataset.csv")
 
 # ======================
-# BALANCING DATA 🔥
-# ======================
-df_majority = df[df.target == 0]
-df_minority = df[df.target == 1]
-
-df_minority_upsampled = resample(
-    df_minority,
-    replace=True,
-    n_samples=len(df_majority),
-    random_state=42
-)
-
-df = pd.concat([df_majority, df_minority_upsampled])
-
-# ======================
-# SHUFFLE (WAJIB setelah balancing)
-# ======================
-df = df.sample(frac=1, random_state=42)
-
-# ======================
-# FITUR
+# FEATURES & TARGET
 # ======================
 features = [
-    "rsi",
-    "rsi_change",
-    "return_1d",
-    "return_5d",
-    "return_10d",
-    "return_20d",
-    "dist_ma20",
-    "dist_ma50",
-    "volume_spike",
-    "volatility",
-    "body_ratio",
-    "upper_ratio",
-    "lower_ratio",
-    "atr"
+    'body_ratio','upper_ratio','lower_ratio',
+    'atr','return_1d','return_5d','return_10d','return_20d',
+    'dist_ma20','dist_ma50','volatility',
+    'volume_spike','rsi','rsi_change'
 ]
 
 X = df[features]
-y = df["target"]
+y = df['target']
 
 # ======================
-# SPLIT DATA
+# SPLIT DATA (TIME SERIES)
 # ======================
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+split = int(len(df) * 0.8)
+
+X_train, X_test = X.iloc[:split], X.iloc[split:]
+y_train, y_test = y.iloc[:split], y.iloc[split:]
 
 # ======================
-# MODEL (UPGRADE 🔥)
+# TRAIN MODEL
 # ======================
 model = RandomForestClassifier(
     n_estimators=200,
     max_depth=10,
-    class_weight='balanced',
     random_state=42
 )
 
@@ -76,15 +45,45 @@ model.fit(X_train, y_train)
 # ======================
 # EVALUASI
 # ======================
-y_pred = model.predict(X_test)
 
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred))
+# --- basic accuracy
+pred_basic = model.predict(X_test)
+acc = accuracy_score(y_test, pred_basic)
+
+# --- probability (confidence)
+proba = model.predict_proba(X_test)[:, 1]
+
+# threshold (sesuai Laravel kamu)
+threshold = 0.6
+pred = (proba > threshold).astype(int)
+
+# --- winrate after threshold
+winrate = accuracy_score(y_test, pred)
+
+# ======================
+# WINRATE KHUSUS BUY
+# ======================
+buy_idx = pred == 1
+
+if np.sum(buy_idx) > 0:
+    winrate_buy = np.mean(y_test[buy_idx] == 1)
+else:
+    winrate_buy = 0
+
+# ======================
+# PRINT RESULT
+# ======================
+print("===== HASIL TRAINING =====")
+print("Total Data      :", len(df))
+print("Train Data      :", len(X_train))
+print("Test Data       :", len(X_test))
+print("--------------------------")
+print("Accuracy (all)  :", round(acc * 100, 2), "%")
+print("Winrate (>=60%) :", round(winrate * 100, 2), "%")
+print("Winrate BUY     :", round(winrate_buy * 100, 2), "%")
 
 # ======================
 # SAVE MODEL
 # ======================
-with open("models/model.pkl", "wb") as f:
-    pickle.dump(model, f)
-
-print("✅ Model berhasil disimpan")
+joblib.dump(model, "model.pkl")
+print("✅ Model disimpan ke model.pkl")

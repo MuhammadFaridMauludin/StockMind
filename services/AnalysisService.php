@@ -2,6 +2,7 @@
 require_once __DIR__ . "/ScoringService.php";
 require_once __DIR__ . "/StockService.php";
 require_once __DIR__ . "/DataService.php";
+use Illuminate\Support\Facades\DB;
 
 class AnalysisService {
 
@@ -535,53 +536,169 @@ $riskNote
 
     return $text;
 }
+public function getWinrate() {
 
-    // =====================
-    // MAIN
-    // =====================
-    public function analisisSaham($kode, $mode = 'investor') {
-        $data = $this->dataService->getData($kode); // ✅ gunakan property, bukan instantiate ulang
+    try {
 
-        if (!$data || isset($data["error"])) {
-            return "❌ Gagal mengambil data untuk saham $kode. Pastikan kode saham benar.";
+        $pdo = new PDO(
+            "mysql:host=localhost;dbname=nama_db;charset=utf8mb4",
+            "username",
+            "password",
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]
+        );
+
+        $stmt = $pdo->query("
+            SELECT 
+                COUNT(*) AS total,
+                SUM(hasil) AS menang
+            FROM prediksi_harga
+            WHERE dievaluasi = 1
+        ");
+
+        $row = $stmt->fetch();
+
+        if (!$row || $row['total'] == 0) {
+            return "Belum ada data evaluasi";
         }
 
-        $scoring = new ScoringService();
+        $winrate = round(($row['menang'] / $row['total']) * 100, 2);
 
-        $harga         = $data["price"]          ?? 0;
-        $eps           = $data["eps"]            ?? 0;
-        $per           = $data["per"]            ?? 0;
-        $pbv           = $data["pbv"]            ?? 0;
-        $roe           = $data["roe"]            ?? 0;
-        $der           = $data["der"]            ?? 0;
-        $div_yield     = $data["div_yield"]      ?? 0;
-        $rsi           = $data["rsi"]            ?? 0;
-        $ma20          = $data["ma20"]           ?? 0;
-        $ma50          = $data["ma50"]           ?? 0;
-        $support       = $data["support"]        ?? 0;
-        $resistance    = $data["resistance"]     ?? 0;
-        $volume_signal = $data["volume_signal"]  ?? "low";
+        return "Winrate: {$winrate}% ({$row['menang']} / {$row['total']} trade)";
 
-        $tek     = $this->analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $volume_signal);
-        $fund    = $this->analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield);
-        $dec     = $scoring->hitungSAW($data);
-        $ml      = $this->getMLPrediction($kode); // ✅ fetch sekali saja di sini
-        $insight = $this->generateInsight($per, $roe, $rsi, $tek['trend'], $ml); // ✅ hapus param $insight
-        $narasi  = $this->generateNarasiAI($kode, [
-            "trend"   => $tek['trend'],
-            "rsi"     => $rsi,
-            "score"   => $dec['score'],
-            "valuasi" => $dec['valuasi'],
-            "roe"     => $roe,
-            "harga"   => $harga,
-            "support" => $support,
-            "per"     => $per,
-        ]);
-
-        return $this->formatOutputByMode(
-            $mode, $kode, $harga, $fund, $tek, $dec,
-            $insight, $narasi, $support, $resistance,
-            $volume_signal, $rsi, $ml 
-        );
+    } catch (Exception $e) {
+        return "Error: " . $e->getMessage();
     }
+}
+// =====================
+// MAIN
+// =====================
+public function analisisSaham($kode, $mode = 'investor') {
+
+    $data = $this->dataService->getData($kode);
+
+    if (!$data || isset($data["error"])) {
+        return "❌ Gagal mengambil data untuk saham $kode. Pastikan kode saham benar.";
+    }
+
+    $scoring = new ScoringService();
+
+    $harga         = $data["price"]          ?? 0;
+    $eps           = $data["eps"]            ?? 0;
+    $per           = $data["per"]            ?? 0;
+    $pbv           = $data["pbv"]            ?? 0;
+    $roe           = $data["roe"]            ?? 0;
+    $der           = $data["der"]            ?? 0;
+    $div_yield     = $data["div_yield"]      ?? 0;
+    $rsi           = $data["rsi"]            ?? 0;
+    $ma20          = $data["ma20"]           ?? 0;
+    $ma50          = $data["ma50"]           ?? 0;
+    $support       = $data["support"]        ?? 0;
+    $resistance    = $data["resistance"]     ?? 0;
+    $volume_signal = $data["volume_signal"]  ?? "low";
+
+    // ======================
+    // ANALISIS
+    // ======================
+    $tek  = $this->analisisTeknikal($harga, $rsi, $ma20, $ma50, $support, $resistance, $volume_signal);
+    $fund = $this->analisisFundamental($per, $pbv, $roe, $eps, $der, $div_yield);
+    $dec  = $scoring->hitungSAW($data);
+
+    // ======================
+    // ML PREDICTION
+    // ======================
+    $ml = $this->getMLPrediction($kode);
+
+    // ======================
+    // SIMPAN KE DB (HANYA SINYAL BAGUS)
+    // ======================
+    if ($ml && isset($ml['pred'], $ml['confidence']) && $ml['confidence'] >= 60 && $ml['pred'] == 1) {
+
+        try {
+
+            $pdo = new PDO(
+                "mysql:host=localhost;dbname=nama_db;charset=utf8mb4",
+                "username",
+                "password",
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                ]
+            );
+
+            // cek duplikat (1 saham per hari)
+            $cek = $pdo->prepare("
+                SELECT COUNT(*) 
+                FROM prediksi_harga 
+                WHERE kode = ? 
+                AND DATE(tanggal) = CURDATE()
+            ");
+
+            $cek->execute([$kode]);
+
+            if ($cek->fetchColumn() == 0) {
+
+                $stmt = $pdo->prepare("
+                    INSERT INTO prediksi_harga 
+                    (kode, tanggal, harga_prediksi, confidence, model, dibuat_pada, harga_awal)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+
+                $stmt->execute([
+                    $kode,
+                    date('Y-m-d H:i:s'),
+                    $ml['pred'],
+                    $ml['confidence'],
+                    'rf_v1',
+                    date('Y-m-d H:i:s'),
+                    $harga
+                ]);
+            }
+
+        } catch (Exception $e) {
+            file_put_contents(
+                __DIR__ . "/log_error.txt",
+                "[" . date('Y-m-d H:i:s') . "] " . $e->getMessage() . PHP_EOL,
+                FILE_APPEND
+            );
+        }
+    }
+
+    // ======================
+    // INSIGHT & NARASI
+    // ======================
+    $insight = $this->generateInsight($per, $roe, $rsi, $tek['trend'], $ml);
+
+    $narasi  = $this->generateNarasiAI($kode, [
+        "trend"   => $tek['trend'],
+        "rsi"     => $rsi,
+        "score"   => $dec['score'],
+        "valuasi" => $dec['valuasi'],
+        "roe"     => $roe,
+        "harga"   => $harga,
+        "support" => $support,
+        "per"     => $per,
+    ]);
+    $winrate = $this->getWinrate();
+    // ======================
+    // OUTPUT
+    // ======================
+    return $this->formatOutputByMode(
+        $mode,
+        $kode,
+        $harga,
+        $fund,
+        $tek,
+        $dec,
+        $insight,
+        $narasi,
+        $support,
+        $resistance,
+        $volume_signal,
+        $rsi,
+        $ml
+    );
+    $output .= "\n🤖 Winrate model: " . $winrate;
+    return $output;
+}
 }
