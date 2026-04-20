@@ -1,17 +1,37 @@
 import yfinance as yf
 import pandas as pd
+import mysql.connector
 
+# ======================
+# KONEKSI DATABASE
+# ======================
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="stockmindd"
+)
+cursor = conn.cursor()
+
+# ======================
+# LIST SAHAM
+# ======================
 kode_list = [
     "ADRO","PTBA","BYAN","ITMG","INDY",
     "MEDC","PGAS","HRUM","MBAP","DOID",
-    "BUMI","DEWA"
-];
+    "BUMI","DEWA",
+    "ELSA","ENRG","RUIS","RAJA","APEX",
+    "BSSR","GEMS","TOBA","HRTA" , "DEWA"
+]
 
 all_data = []
 
+# ======================
+# LOOP SAHAM
+# ======================
 for kode in kode_list:
 
-    kode_yf = kode + ".JK" 
+    kode_yf = kode + ".JK"
     print("Ambil:", kode_yf)
 
     stock = yf.Ticker(kode_yf)
@@ -22,6 +42,28 @@ for kode in kode_list:
         continue
 
     # ======================
+    # SIMPAN KE DB (riwayat_harga)
+    # ======================
+    for index, row in hist.iterrows():
+
+        try:
+            cursor.execute("""
+                INSERT INTO riwayat_harga 
+                (kode, tanggal, harga_tutup, volume, open, high, low)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                kode,
+                index.date(),
+                float(row['Close']),
+                int(row['Volume']),
+                float(row['Open']),
+                float(row['High']),
+                float(row['Low'])
+            ))
+        except:
+            pass  # skip duplicate
+
+    # ======================
     # PRICE ACTION
     # ======================
     hist['body']         = hist['Close'] - hist['Open']
@@ -29,7 +71,6 @@ for kode in kode_list:
     hist['upper_shadow'] = hist['High'] - hist[['Close', 'Open']].max(axis=1)
     hist['lower_shadow'] = hist[['Close', 'Open']].min(axis=1) - hist['Low']
 
-    # ✅ Hindari division by zero SEBELUM normalisasi
     hist['range'] = hist['range'].replace(0, 1)
 
     # ======================
@@ -66,7 +107,6 @@ for kode in kode_list:
     hist['ma20'] = hist['Close'].rolling(20).mean()
     hist['ma50'] = hist['Close'].rolling(50).mean()
 
-    # DISTANCE TO MA
     hist['dist_ma20'] = (hist['Close'] - hist['ma20']) / hist['ma20']
     hist['dist_ma50'] = (hist['Close'] - hist['ma50']) / hist['ma50']
 
@@ -79,8 +119,8 @@ for kode in kode_list:
     # VOLUME
     # ======================
     hist['volume_ma20']  = hist['Volume'].rolling(20).mean()
-    hist['volume_spike'] = hist['Volume'] / hist['volume_ma20']  # ✅ hapus duplikat volume_ratio
-    
+    hist['volume_spike'] = hist['Volume'] / hist['volume_ma20']
+
     # ======================
     # RSI
     # ======================
@@ -100,16 +140,27 @@ for kode in kode_list:
     # CLEAN
     # ======================
     hist = hist.dropna()
-
     hist['kode'] = kode
+
     all_data.append(hist)
 
 # ======================
-# GABUNG & SAVE
+# COMMIT DB
+# ======================
+conn.commit()
+
+# ======================
+# SAVE DATASET
 # ======================
 if not all_data:
-    print("❌ Tidak ada data yang berhasil diambil")
+    print("❌ Tidak ada data")
 else:
     df = pd.concat(all_data)
     df.to_csv("data/dataset.csv", index=False)
-    print("✅ Total dataset:", len(df))
+    print("✅ Dataset:", len(df))
+
+# ======================
+# CLOSE DB
+# ======================
+cursor.close()
+conn.close()
